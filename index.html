@@ -5,16 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000000">
-    
-    <!-- ✅ FAVICON: иконка во вкладке браузера и на главном экране -->
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-    <link rel="apple-touch-icon" href="favicon.ico">
-    
-    <title>Анти ИИ Взгляд</title>
-    
+    <title>Анти ИИ Взгляд — полная версия</title>
     <style>
-        /* СБРОС СТИЛЕЙ */
         * {
             margin: 0;
             padding: 0;
@@ -22,14 +14,12 @@
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
-        
-        /* ОСНОВНОЙ КОНТЕЙНЕР */
         body {
             background: #000000;
             color: #00ff00;
             font-family: system-ui, -apple-system, "Segoe UI", Roboto, monospace;
             text-align: center;
-            padding: 12px 20px 20px;
+            padding: 20px;
             margin: 0;
             min-height: 100dvh;
             display: flex;
@@ -37,84 +27,43 @@
             align-items: center;
             touch-action: manipulation;
         }
-        
-        /* ✅ ЛОГОТИП НА СТРАНИЦЕ — ПО ЦЕНТРУ ВВЕРХУ */
-        .logo-container {
-            width: 100%;
-            max-width: 400px;
-            margin: 0 auto 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .logo-image {
-            width: 80px;
-            height: 80px;
-            object-fit: contain;
-            border-radius: 16px;
-            background: #111111;
-            border: 2px solid #00d4aa;
-            box-shadow: 0 4px 20px rgba(0, 212, 170, 0.3);
-            display: block;
-        }
-        
-        .logo-title {
-            margin-top: 8px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #00ff00;
-            letter-spacing: 0.5px;
-            text-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
-        }
-        
-        /* ВИДЕО С КАМЕРЫ */
-        #video {
+        video {
             display: block;
             margin: 0 auto;
             max-width: 100%;
             width: 100%;
             max-width: 400px;
-            border-radius: 16px;
+            border-radius: 20px;
             border: 1px solid #222222;
-            background: #000;
-            /* ✅ УБРАНО ЗЕРКАЛО: transform: scaleX(-1) — чтобы лево/право не путались */
+            background: #000000;
         }
-        
-        /* КНОПКА ЗАПУСКА */
-        #startBtn {
+        button {
             background: #00d4aa;
             color: #000000;
             border: none;
-            padding: 14px 28px;
-            font-size: 1.15rem;
+            padding: 15px 30px;
+            font-size: 1.2rem;
             font-weight: 700;
-            border-radius: 40px;
-            margin: 16px 0;
+            border-radius: 48px;
+            margin: 20px 0;
             min-width: 260px;
             max-width: 400px;
             width: 90vw;
             box-shadow: 0 4px 16px rgba(0, 212, 170, 0.3);
             cursor: pointer;
-            transition: transform 0.1s ease, box-shadow 0.2s ease;
+            transition: transform 0.1s ease;
         }
-        
-        #startBtn:active {
+        button:active {
             transform: scale(0.98);
-            box-shadow: 0 2px 8px rgba(0, 212, 170, 0.5);
         }
-        
-        #startBtn:disabled {
+        button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
         }
-        
-        /* СТАТУС — ДОСТУПЕН ДЛЯ СКРИНРИДЕРОВ */
-        #status {
-            margin: 16px 0 8px;
-            font-size: 1.05rem;
+        .status {
+            margin: 20px 0;
+            font-size: 1.1rem;
             padding: 10px 16px;
             background: #111111;
             border-radius: 24px;
@@ -128,16 +77,12 @@
             width: 100%;
             max-width: 400px;
         }
-        
-        #status.warn {
+        .status.warn {
             color: #ffaa00;
         }
-        
-        #status.error {
+        .status.error {
             color: #ff6666;
         }
-        
-        /* ПОДСКАЗКА (скрыта от скринридеров) */
         .hint {
             color: #55aa55;
             font-size: 0.85rem;
@@ -145,8 +90,6 @@
             line-height: 1.4;
             max-width: 400px;
         }
-        
-        /* СКРЫТО ВИЗУАЛЬНО, НО ДОСТУПНО СКРИНРИДЕРАМ */
         .sr-only {
             position: absolute;
             width: 1px;
@@ -158,59 +101,32 @@
             white-space: nowrap;
             border: 0;
         }
-        
-        /* CANVAS ДЛЯ ОБРАБОТКИ (скрыт) */
         #procCanvas {
             display: none;
         }
     </style>
 </head>
 <body>
-    <!-- ✅ ЛОГОТИП НА СТРАНИЦЕ -->
-    <div class="logo-container">
-        <!-- 
-            Замените src="favicon.ico" на путь к вашему логотипу, если он другой.
-            Например: src="logo.png"
-            Если файла нет — сработает заглушка (onerror), чтобы вёрстка не ломалась.
-        -->
-        <img 
-            src="favicon.ico" 
-            alt="Логотип Анти ИИ Взгляд" 
-            class="logo-image"
-            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-        >
-        <!-- Заглушка, если логотип не загрузился -->
-        <div class="logo-image" style="display:none; align-items:center; justify-content:center; font-size:2.5rem; background:#111; border:2px solid #00d4aa; border-radius:16px;">👁️</div>
-        <div class="logo-title">Анти ИИ Взгляд</div>
-    </div>
-    
-    <!-- ВИДЕО ПОТОК С КАМЕРЫ -->
     <video id="video" autoplay playsinline muted></video>
-    
-    <!-- СКРЫТЫЙ КАНАЛ ДЛЯ ОБРАБОТКИ КАДРОВ -->
     <canvas id="procCanvas"></canvas>
     
-    <!-- КНОПКА УПРАВЛЕНИЯ -->
     <div>
         <button id="startBtn">🔍 ЗАПУСТИТЬ ПОМОЩНИКА</button>
     </div>
     
-    <!-- СТАТУС СИСТЕМЫ (озвучивается скринридерами) -->
-    <div id="status" role="status" aria-live="polite" aria-atomic="true">
+    <div id="status" class="status" role="status" aria-live="polite" aria-atomic="true">
         ⚫ Нажмите Запустить
     </div>
     
-    <!-- ПОДСКАЗКА ДЛЯ ЗРЯЧИХ -->
     <div class="hint" aria-hidden="true">
         Держите телефон камерой вперёд.<br>
-        Система молчит, пока путь чист.
+        Тиканье каждые 6 секунд = система работает.
     </div>
     
-    <!-- ДОПОЛНИТЕЛЬНОЕ ОПИСАНИЕ ДЛЯ СКРИНРИДЕРОВ -->
     <span class="sr-only">
-        Анти И И Взгляд — система предупреждения о препятствиях для незрячих пользователей. 
-        Использует камеру и акселерометр телефона для детекции ям и препятствий. 
-        Работает офлайн, без интернета.
+        Анти И И Взгляд — система предупреждения о препятствиях для незрячих пользователей.
+        Использует камеру и акселерометр телефона для детекции ям и препятствий.
+        Работает офлайн, без интернета. Тиканье подтверждает работу системы.
     </span>
 
     <script>
@@ -219,407 +135,426 @@
         // ============================================
         // НАСТРОЙКИ СИСТЕМЫ
         // ============================================
-        const CONFIG = {
-            // Сетка анализа (нижняя треть кадра)
-            GRID_ROWS: 4,              // 4 строки
-            GRID_COLS: 4,              // 4 столбца = 16 ячеек всего
-            
-            // Чувствительность детекции
-            SENSITIVITY: 0.45,         // Изменение яркости >45% = изменение в ячейке
-            MIN_DANGER_CELLS: 1,       // Мин. ячеек с изменением для подозрения
-            MAX_TREMOR_CELLS: 9,       // Если >=10 ячеек изменились = тряска (игнор)
-            
-            // Подтверждение тревоги
-            CONFIRM_FRAMES: 2,         // Тревога только после 2 кадров подряд
-            ALERT_COOLDOWN: 1800,      // Пауза между тревогами (мс)
-            
-            // Разрешение обработки (меньше = быстрее + экономия батареи)
-            WORK_WIDTH: 160,           // Ширина рабочего холста
-            WORK_HEIGHT: 120,          // Высота рабочего холста
-            
-            // Зона интереса (нижняя часть кадра = зона ног)
-            GROUND_ZONE_START: 0.67    // Нижняя 33% кадра
-        };
+        const GRID_ROWS = 4;
+        const GRID_COLS = 4;
+        let BASE_SENSITIVITY = 0.45;
+        let currentSensitivity = BASE_SENSITIVITY;
+        const MIN_DANGER_CELLS = 1;
+        const MAX_TREMOR_CELLS = 9;
+        const CONFIRM_FRAMES = 2;
+        const ALERT_COOLDOWN = 1800;
+        const HEARTBEAT_INTERVAL = 6000;
+        const WORK_WIDTH = 160;
+        const WORK_HEIGHT = 120;
+        const GROUND_ZONE_START = 0.67;
 
         // ============================================
         // ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
         // ============================================
-        
-        // Элементы DOM
         const videoElement = document.getElementById('video');
         const canvasElement = document.getElementById('procCanvas');
         const canvasContext = canvasElement.getContext('2d', { willReadFrequently: true });
         const startButton = document.getElementById('startBtn');
         const statusElement = document.getElementById('status');
         
-        // Состояние системы
-        let mediaStream = null;              // Поток с камеры
-        let isSystemRunning = false;         // Флаг работы системы
-        let previousGridValues = [];         // Яркость ячеек в предыдущем кадре
-        let anomalyStreakCounter = 0;        // Счётчик кадров с аномалией
-        let lastAlertTimestamp = 0;          // Время последней тревоги
-        let animationLoopId = null;          // ID цикла анимации
-        let audioContext = null;             // Аудио-контекст для звуков
+        let mediaStream = null;
+        let isSystemRunning = false;
+        let previousGridValues = [];
+        let anomalyStreakCounter = 0;
+        let lastAlertTimestamp = 0;
+        let animationLoopId = null;
+        let audioContext = null;
         
-        // Акселерометр
+        let heartbeatTimer = null;
+        let batteryTimer = null;
+        let lastBatteryWarnTimestamp = 0;
+        let lastHeartbeatTimestamp = 0;
+        
         let lastAccelerationZ = null;
-        let accelerationAlertTimer = 0;
+        let accelerationAlertCooldown = 0;
+        let batteryObject = null;
 
         // ============================================
         // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
         // ============================================
         
-        /**
-         * Озвучивает текст через Web Speech API
-         * @param {string} text - Текст для озвучки
-         */
-        function speakText(text) {
+        function speakText(text, isUrgent = false) {
             if (!window.speechSynthesis) {
                 return;
             }
-            // Отменяем предыдущую речь, если есть
+            if (!isUrgent && window.speechSynthesis.speaking) {
+                return;
+            }
             window.speechSynthesis.cancel();
-            
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'ru-RU';
-            utterance.rate = 0.95;    // Чуть медленнее для чёткости
-            utterance.pitch = 1.0;    // Нормальная высота голоса
-            
+            utterance.rate = 0.95;
+            utterance.pitch = 1.0;
             window.speechSynthesis.speak(utterance);
         }
         
-        /**
-         * Вибрирует телефон по паттерну
-         * @param {number|number[]} pattern - Паттерн вибрации
-         */
         function vibratePhone(pattern) {
             if (navigator.vibrate) {
                 navigator.vibrate(pattern);
             }
         }
         
-        /**
-         * Обновляет статус в интерфейсе
-         * @param {string} message - Сообщение
-         * @param {string} type - Тип: 'ok', 'warn', 'error'
-         */
-        function updateStatus(message, type = 'ok') {
+        function updateStatusMessage(message, messageType = 'ok') {
             statusElement.textContent = message;
-            
-            if (type === 'warn') {
-                statusElement.className = 'warn';
-            } else if (type === 'error') {
-                statusElement.className = 'error';
+            if (messageType === 'warn') {
+                statusElement.className = 'status warn';
+            } else if (messageType === 'error') {
+                statusElement.className = 'status error';
             } else {
-                statusElement.className = '';
+                statusElement.className = 'status';
             }
         }
         
-        /**
-         * Воспроизводит короткий звуковой сигнал
-         * @param {number} frequency - Частота в Гц
-         * @param {number} duration - Длительность в секундах
-         * @param {number} gain - Громкость (0.0 - 1.0)
-         */
-        function playBeep(frequency, duration, gain) {
+        function playBeepSound(frequency, duration, gainValue) {
             if (!audioContext) {
                 return;
             }
-            
-            // Если аудио приостановлено (политика браузера) — пробуем возобновить
             if (audioContext.state === 'suspended') {
                 audioContext.resume().catch(function() {});
             }
-            
             try {
                 const oscillator = audioContext.createOscillator();
                 const gainNode = audioContext.createGain();
-                
                 oscillator.connect(gainNode);
                 gainNode.connect(audioContext.destination);
-                
                 oscillator.frequency.value = frequency;
-                oscillator.type = 'square';  // Резкий, хорошо слышный звук
-                
-                gainNode.gain.setValueAtTime(gain, audioContext.currentTime);
+                oscillator.type = 'square';
+                gainNode.gain.setValueAtTime(gainValue, audioContext.currentTime);
                 gainNode.gain.exponentialRampToValueAtTime(
-                    0.001, 
+                    0.001,
                     audioContext.currentTime + duration
                 );
-                
                 oscillator.start();
                 oscillator.stop(audioContext.currentTime + duration);
             } catch (error) {
-                // Игнорируем ошибки аудио (может быть не поддерживается)
-                console.warn('Audio error:', error);
+                console.warn('Audio beep error:', error);
             }
-        }
-        
-        /**
-         * Вычисляет среднюю яркость области в ImageData
-         * @param {ImageData} imgData - Данные изображения
-         * @param {number} startX - Начальный X
-         * @param {number} startY - Начальный Y
-         * @param {number} width - Ширина области
-         * @param {number} height - Высота области
-         * @returns {number} Средняя яркость (0-765)
-         */
-        function calculateAverageBrightness(imgData, startX, startY, width, height) {
-            let brightnessSum = 0;
-            let pixelCount = 0;
-            
-            const imageData = imgData.data;
-            const imageWidth = imgData.width;
-            
-            // Проходим по области с шагом 2 для скорости
-            for (let row = startY; row < startY + height; row += 2) {
-                for (let col = startX; col < startX + width; col += 2) {
-                    const index = (row * imageWidth + col) * 4;
-                    
-                    // Яркость по формуле: R*0.299 + G*0.587 + B*0.114
-                    // Но для скорости считаем просто сумму (пропорции сохраняются)
-                    const r = imageData[index];
-                    const g = imageData[index + 1];
-                    const b = imageData[index + 2];
-                    
-                    brightnessSum += (r + g + b);
-                    pixelCount++;
-                }
-            }
-            
-            return pixelCount > 0 ? brightnessSum / pixelCount : 0;
         }
 
         // ============================================
-        // ОСНОВНОЙ АНАЛИЗ КАДРА
+        // АНАЛИЗ КАДРА
         // ============================================
         
-        /**
-         * Анализирует текущий кадр на наличие препятствий
-         */
         function analyzeCurrentFrame() {
-            // Проверяем, что система активна и видео готово
             if (!isSystemRunning || !videoElement.videoWidth || !videoElement.videoHeight) {
                 return;
             }
             
-            // Настраиваем холст под рабочее разрешение
-            canvasElement.width = CONFIG.WORK_WIDTH;
-            canvasElement.height = CONFIG.WORK_HEIGHT;
-            
-            // Рисуем текущий кадр видео на холст (браузер сам уменьшит)
+            canvasElement.width = WORK_WIDTH;
+            canvasElement.height = WORK_HEIGHT;
             canvasContext.drawImage(
-                videoElement, 
-                0, 0, 
-                CONFIG.WORK_WIDTH, 
-                CONFIG.WORK_HEIGHT
+                videoElement,
+                0, 0,
+                WORK_WIDTH, WORK_HEIGHT
             );
             
-            // Получаем данные пикселей для анализа
             const imageData = canvasContext.getImageData(
-                0, 0, 
-                CONFIG.WORK_WIDTH, 
-                CONFIG.WORK_HEIGHT
+                0, 0,
+                WORK_WIDTH, WORK_HEIGHT
             );
             
-            // Вычисляем границы зоны анализа (нижняя треть = зона ног)
-            const startRow = Math.floor(CONFIG.WORK_HEIGHT * CONFIG.GROUND_ZONE_START);
-            const zoneHeight = (CONFIG.WORK_HEIGHT - startRow) / CONFIG.GRID_ROWS;
-            const zoneWidth = CONFIG.WORK_WIDTH / CONFIG.GRID_COLS;
+            const startRow = Math.floor(WORK_HEIGHT * GROUND_ZONE_START);
+            const zoneHeight = (WORK_HEIGHT - startRow) / GRID_ROWS;
+            const zoneWidth = WORK_WIDTH / GRID_COLS;
             
-            // Массив текущих значений яркости для всех ячеек
             const currentGridValues = [];
             let changedCellsCount = 0;
             
-            // Проходим по всем ячейкам сетки
-            for (let row = 0; row < CONFIG.GRID_ROWS; row++) {
-                for (let col = 0; col < CONFIG.GRID_COLS; col++) {
-                    const cellX = col * zoneWidth;
-                    const cellY = startRow + row * zoneHeight;
+            for (let row = 0; row < GRID_ROWS; row++) {
+                for (let col = 0; col < GRID_COLS; col++) {
+                    const cellStartX = col * zoneWidth;
+                    const cellStartY = startRow + row * zoneHeight;
                     
-                    // Вычисляем яркость текущей ячейки
-                    const currentBrightness = calculateAverageBrightness(
-                        imageData, 
-                        cellX, 
-                        cellY, 
-                        zoneWidth, 
-                        zoneHeight
-                    );
+                    let brightnessSum = 0;
+                    let pixelCount = 0;
+                    const imgData = imageData.data;
+                    const imgWidth = imageData.width;
                     
-                    currentGridValues.push(currentBrightness);
+                    for (let py = cellStartY; py < cellStartY + zoneHeight; py += 2) {
+                        for (let px = cellStartX; px < cellStartX + zoneWidth; px += 2) {
+                            const dataIdx = (py * imgWidth + px) * 4;
+                            brightnessSum += imgData[dataIdx] + imgData[dataIdx + 1] + imgData[dataIdx + 2];
+                            pixelCount++;
+                        }
+                    }
                     
-                    // Если есть предыдущий кадр — сравниваем
+                    const cellBrightness = pixelCount > 0 ? brightnessSum / pixelCount : 0;
+                    currentGridValues.push(cellBrightness);
+                    
                     if (previousGridValues.length > 0) {
-                        const prevIndex = row * CONFIG.GRID_COLS + col;
-                        const previousBrightness = previousGridValues[prevIndex];
-                        
-                        // Вычисляем относительное изменение
-                        const relativeDiff = previousBrightness > 0 
-                            ? Math.abs(currentBrightness - previousBrightness) / previousBrightness 
-                            : 0;
-                        
-                        // Если изменение превышает порог — ячейка "изменилась"
-                        if (relativeDiff > CONFIG.SENSITIVITY) {
-                            changedCellsCount++;
+                        const gridIndex = row * GRID_COLS + col;
+                        const previousBrightness = previousGridValues[gridIndex];
+                        if (previousBrightness > 0) {
+                            const relativeDiff = Math.abs(cellBrightness - previousBrightness) / previousBrightness;
+                            if (relativeDiff > currentSensitivity) {
+                                changedCellsCount++;
+                            }
                         }
                     }
                 }
             }
             
-            // ========================================
-            // ЛОГИКА ФИЛЬТРАЦИИ СОБЫТИЙ
-            // ========================================
-            
-            // Случай 1: Слишком много изменений = тряска/шаг (игнорируем)
-            if (changedCellsCount >= CONFIG.MAX_TREMOR_CELLS) {
+            if (changedCellsCount >= MAX_TREMOR_CELLS) {
                 anomalyStreakCounter = 0;
-                // Можно добавить отладочный статус, но не спамим
-            } 
-            // Случай 2: Локальное изменение = возможное препятствие
-            else if (changedCellsCount >= CONFIG.MIN_DANGER_CELLS && 
-                     changedCellsCount < CONFIG.MAX_TREMOR_CELLS) {
+            } else if (changedCellsCount >= MIN_DANGER_CELLS && changedCellsCount < MAX_TREMOR_CELLS) {
                 anomalyStreakCounter++;
-            } 
-            // Случай 3: Нет изменений = путь чист
-            else {
+            } else {
                 anomalyStreakCounter = 0;
             }
             
-            // ========================================
-            // ПРОВЕРКА ТРЕВОГИ
-            // ========================================
             const currentTime = Date.now();
-            
-            // Тревога срабатывает, если:
-            // 1. Аномалия подтверждена в нескольких кадрах подряд
-            // 2. Прошло достаточно времени с последней тревоги
-            if (anomalyStreakCounter >= CONFIG.CONFIRM_FRAMES && 
-                (currentTime - lastAlertTimestamp) > CONFIG.ALERT_COOLDOWN) {
-                
-                // Сбрасываем счётчик и обновляем время
-                anomalyStreakCounter = 0;
+            if (anomalyStreakCounter >= CONFIRM_FRAMES && (currentTime - lastAlertTimestamp) > ALERT_COOLDOWN) {
                 lastAlertTimestamp = currentTime;
-                
-                // Воспроизводим предупреждение
-                playBeep(750, 0.12, 0.3);      // Звук 750 Гц, 120 мс
-                vibratePhone([200, 80, 200]);   // Вибрация: удар-пауза-удар
-                speakText('Опасность');          // Голосовое предупреждение
-                
-                // Обновляем статус
-                updateStatus('⚠️ ПРЕПЯТСТВИЕ', 'warn');
-                
-                // Возвращаем нормальный статус через 2 секунды
+                anomalyStreakCounter = 0;
+                playBeepSound(750, 0.12, 0.3);
+                vibratePhone([200, 80, 200]);
+                speakText('Опасность', true);
+                updateStatusMessage('⚠️ ПРЕПЯТСТВИЕ', 'warn');
                 setTimeout(function() {
                     if (isSystemRunning) {
-                        updateStatus('🟢 Путь свободен');
+                        updateStatusMessage('🟢 Путь свободен');
                     }
                 }, 2000);
-            } 
-            // Если изменений нет и давно не было тревоги — показываем "путь чист"
-            else if (changedCellsCount === 0 && 
-                     (currentTime - lastAlertTimestamp) > 3000) {
-                updateStatus('🟢 Путь свободен');
+            } else if (changedCellsCount === 0 && (currentTime - lastAlertTimestamp) > 3000) {
+                updateStatusMessage('🟢 Путь свободен');
             }
             
-            // Сохраняем текущие значения для следующего кадра
             previousGridValues = currentGridValues;
         }
         
-        /**
-         * Основной цикл обработки кадров (~7 кадров в секунду)
-         */
         function processingLoop() {
             if (!isSystemRunning) {
                 return;
             }
-            
-            // Анализируем текущий кадр
             analyzeCurrentFrame();
-            
-            // Планируем следующий кадр с задержкой ~140 мс = ~7 FPS
             animationLoopId = setTimeout(function() {
                 requestAnimationFrame(processingLoop);
             }, 140);
         }
 
         // ============================================
-        // ЗАПУСК И ОСТАНОВКА СИСТЕМЫ
+        // АДАПТИВНАЯ ЧУВСТВИТЕЛЬНОСТЬ
         // ============================================
         
-        /**
-         * Запускает систему защиты
-         */
+        function initializeAdaptiveSensitivity() {
+            if (!('DeviceMotionEvent' in window)) {
+                return;
+            }
+            window.addEventListener('devicemotion', function(event) {
+                if (!isSystemRunning) {
+                    return;
+                }
+                const acc = event.acceleration;
+                if (!acc) {
+                    return;
+                }
+                const energy = Math.abs(acc.x || 0) + Math.abs(acc.y || 0) + Math.abs(acc.z || 0);
+                const factor = Math.min(0.5, energy / 40);
+                const newSensitivity = 0.85 - factor;
+                if (Math.abs(newSensitivity - currentSensitivity) > 0.02) {
+                    currentSensitivity += (newSensitivity - currentSensitivity) * 0.1;
+                }
+            }, { passive: true });
+        }
+
+        // ============================================
+        // ТИКАНЬЕ (СЕРДЦЕБИЕНИЕ)
+        // ============================================
+        
+        function startHeartbeatService() {
+            if (heartbeatTimer) {
+                clearInterval(heartbeatTimer);
+            }
+            heartbeatTimer = setInterval(function() {
+                if (!isSystemRunning) {
+                    return;
+                }
+                if (Date.now() - lastAlertTimestamp < 5000) {
+                    return;
+                }
+                if (window.speechSynthesis && window.speechSynthesis.speaking) {
+                    return;
+                }
+                vibratePhone([15]);
+                lastHeartbeatTimestamp = Date.now();
+            }, HEARTBEAT_INTERVAL);
+        }
+        
+        function stopHeartbeatService() {
+            if (heartbeatTimer) {
+                clearInterval(heartbeatTimer);
+                heartbeatTimer = null;
+            }
+        }
+
+        // ============================================
+        // МОНИТОРИНГ БАТАРЕИ
+        // ============================================
+        
+        function handleBatteryChange() {
+            if (!isSystemRunning || !batteryObject) {
+                return;
+            }
+            const batteryLevel = Math.round(batteryObject.level * 100);
+            const isCharging = batteryObject.charging;
+            const currentTime = Date.now();
+            
+            if (!isCharging) {
+                if (batteryLevel <= 5 && currentTime - lastBatteryWarnTimestamp > 120000) {
+                    speakText('Критический заряд, срочно зарядите!', true);
+                    lastBatteryWarnTimestamp = currentTime;
+                } else if (batteryLevel <= 10 && currentTime - lastBatteryWarnTimestamp > 60000) {
+                    speakText('Заряд 10 процентов, скоро выключусь', true);
+                    lastBatteryWarnTimestamp = currentTime;
+                } else if (batteryLevel <= 20 && currentTime - lastBatteryWarnTimestamp > 120000) {
+                    speakText('Заряд батареи ' + batteryLevel + ' процентов', true);
+                    lastBatteryWarnTimestamp = currentTime;
+                }
+            }
+        }
+        
+        async function initializeBatteryMonitor() {
+            if (!navigator.getBattery) {
+                return;
+            }
+            try {
+                batteryObject = await navigator.getBattery();
+                batteryObject.addEventListener('levelchange', handleBatteryChange);
+                batteryObject.addEventListener('chargingchange', handleBatteryChange);
+                handleBatteryChange();
+                batteryTimer = setInterval(handleBatteryChange, 30000);
+            } catch (error) {
+                console.warn('Battery API error:', error);
+            }
+        }
+        
+        function stopBatteryMonitor() {
+            if (batteryTimer) {
+                clearInterval(batteryTimer);
+                batteryTimer = null;
+            }
+            if (batteryObject) {
+                batteryObject.removeEventListener('levelchange', handleBatteryChange);
+                batteryObject.removeEventListener('chargingchange', handleBatteryChange);
+            }
+        }
+
+        // ============================================
+        // ДЕТЕКТОР ПРОВАЛА (АКСЕЛЕРОМЕТР)
+        // ============================================
+        
+        function initializeFallDetector() {
+            if (!('DeviceMotionEvent' in window)) {
+                return;
+            }
+            window.addEventListener('devicemotion', function(event) {
+                if (!isSystemRunning) {
+                    return;
+                }
+                const acc = event.accelerationIncludingGravity;
+                if (!acc || acc.z === null) {
+                    return;
+                }
+                const currentZ = acc.z;
+                if (lastAccelerationZ !== null && Date.now() > accelerationAlertCooldown) {
+                    const deltaZ = currentZ - lastAccelerationZ;
+                    if (deltaZ < -5.5) {
+                        accelerationAlertCooldown = Date.now() + 2000;
+                        playBeepSound(900, 0.15, 0.4);
+                        vibratePhone([300, 100, 300]);
+                        speakText('Провал!', true);
+                        updateStatusMessage('🔥 ПРОВАЛ!', 'error');
+                    }
+                }
+                lastAccelerationZ = currentZ;
+            }, { passive: true });
+        }
+
+        // ============================================
+        // ЗАПУСК СИСТЕМЫ
+        // ============================================
+        
         async function startProtectionSystem() {
-            // Инициализируем аудио-контекст по жесту пользователя (обход политики браузеров)
+            if (isSystemRunning) {
+                return;
+            }
+            
             if (!audioContext) {
                 try {
                     audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 } catch (error) {
-                    console.warn('AudioContext не поддерживается:', error);
+                    console.warn('AudioContext initialization error:', error);
                 }
             }
             
-            // Блокируем кнопку на время запуска
             startButton.disabled = true;
-            updateStatus('🟡 Запуск камеры...');
+            updateStatusMessage('🟡 Запуск камеры...');
             
             try {
-                // Запрашиваем доступ к задней камере
                 mediaStream = await navigator.mediaDevices.getUserMedia({
                     video: {
-                        facingMode: 'environment',    // Задняя камера
-                        width: { ideal: 320 },         // Желаемое разрешение
+                        facingMode: 'environment',
+                        width: { ideal: 320 },
                         height: { ideal: 240 }
                     }
                 });
                 
-                // Подключаем поток к видео-элементу
                 videoElement.srcObject = mediaStream;
                 await videoElement.play();
-                
-                // Система активна
                 isSystemRunning = true;
                 
-                // Фаза калибровки (2 секунды)
-                updateStatus('🟡 Калибровка 2 сек...');
+                initializeAdaptiveSensitivity();
+                startHeartbeatService();
+                await initializeBatteryMonitor();
+                initializeFallDetector();
+                
+                updateStatusMessage('🟡 Калибровка 2 сек...');
                 speakText('Калибровка');
                 
-                // После калибровки сбрасываем эталон и начинаем детекцию
                 setTimeout(function() {
                     if (isSystemRunning) {
-                        previousGridValues = [];      // Сброс эталона
-                        anomalyStreakCounter = 0;     // Сброс счётчика
-                        updateStatus('🟢 Защита активна');
+                        previousGridValues = [];
+                        anomalyStreakCounter = 0;
+                        updateStatusMessage('🟢 Защита активна. Тиканье каждые 6 секунд.');
                         speakText('Готов');
                     }
                 }, 2000);
                 
-                // Запускаем основной цикл обработки
                 processingLoop();
                 
             } catch (error) {
-                // Обработка ошибки доступа к камере
-                console.error('Ошибка камеры:', error);
-                updateStatus('❌ Ошибка камеры', 'error');
-                speakText('Камера недоступна');
+                console.error('Camera start error:', error);
+                let errorMessage = 'Ошибка камеры';
+                if (error.name === 'NotAllowedError') {
+                    errorMessage = 'Разрешите доступ к камере в настройках';
+                } else if (error.name === 'NotFoundError') {
+                    errorMessage = 'Камера не найдена на устройстве';
+                } else if (error.name === 'NotReadableError') {
+                    errorMessage = 'Камера занята другим приложением';
+                }
+                updateStatusMessage('❌ ' + errorMessage, 'error');
+                speakText(errorMessage);
                 startButton.disabled = false;
             }
         }
+
+        // ============================================
+        // ОСТАНОВКА СИСТЕМЫ
+        // ============================================
         
-        /**
-         * Останавливает систему защиты
-         */
         function stopProtectionSystem() {
-            // Флаг остановки
             isSystemRunning = false;
             
-            // Останавливаем цикл анимации
             if (animationLoopId) {
                 clearTimeout(animationLoopId);
                 animationLoopId = null;
             }
             
-            // Останавливаем поток с камеры
             if (mediaStream) {
                 mediaStream.getTracks().forEach(function(track) {
                     track.stop();
@@ -627,30 +562,28 @@
                 mediaStream = null;
             }
             
-            // Закрываем аудио-контекст
             if (audioContext) {
                 audioContext.close().catch(function() {});
                 audioContext = null;
             }
             
-            // Разблокируем кнопку
-            startButton.disabled = false;
+            stopHeartbeatService();
+            stopBatteryMonitor();
             
-            // Обновляем статус
-            updateStatus('⏹️ Остановлено');
+            startButton.disabled = false;
+            updateStatusMessage('⏹️ Остановлено');
             speakText('Система выключена');
             vibratePhone(100);
             
-            // Сбрасываем состояние анализа
             previousGridValues = [];
             anomalyStreakCounter = 0;
+            lastAccelerationZ = null;
         }
 
         // ============================================
         // ОБРАБОТЧИКИ СОБЫТИЙ
         // ============================================
         
-        // Кнопка запуска/остановки
         startButton.addEventListener('click', function() {
             if (isSystemRunning) {
                 stopProtectionSystem();
@@ -659,14 +592,12 @@
             }
         });
         
-        // Очистка ресурсов при закрытии страницы
         window.addEventListener('beforeunload', function() {
             if (isSystemRunning) {
                 stopProtectionSystem();
             }
         });
         
-        // Клавиша Escape для быстрой остановки (удобно при тесте)
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape' && isSystemRunning) {
                 stopProtectionSystem();
@@ -674,57 +605,10 @@
         });
 
         // ============================================
-        // АКСЕЛЕРОМЕТР: ДЕТЕКТОР ПРОВАЛА
-        // ============================================
-        
-        // Проверяем поддержку события devicemotion
-        if ('DeviceMotionEvent' in window) {
-            window.addEventListener('devicemotion', function(event) {
-                // Работаем только если система активна
-                if (!isSystemRunning) {
-                    return;
-                }
-                
-                const acceleration = event.accelerationIncludingGravity;
-                
-                // Проверяем, что данные по оси Z доступны
-                if (!acceleration || acceleration.z === null) {
-                    return;
-                }
-                
-                const currentZ = acceleration.z;
-                
-                // Если есть предыдущее значение — анализируем изменение
-                if (lastAccelerationZ !== null) {
-                    const deltaZ = currentZ - lastAccelerationZ;
-                    const currentTime = Date.now();
-                    
-                    // Резкое падение (отрицательный пик по оси Z)
-                    // Порог -6 подобран эмпирически под типичную походку
-                    if (deltaZ < -6 && currentTime > accelerationAlertTimer) {
-                        // Блокируем повторные срабатывания на 2 секунды
-                        accelerationAlertTimer = currentTime + 2000;
-                        
-                        // Экстренное предупреждение
-                        playBeep(900, 0.15, 0.4);        // Более высокий и громкий звук
-                        vibratePhone([300, 100, 300]);    // Длинная тревожная вибрация
-                        speakText('Провал!');              // Голосовое предупреждение
-                        updateStatus('🔥 ПРОВАЛ!', 'error');
-                    }
-                }
-                
-                // Сохраняем текущее значение для следующего кадра
-                lastAccelerationZ = currentZ;
-            }, { passive: true });  // passive: true для лучшей производительности
-        }
-
-        // ============================================
         // ИНИЦИАЛИЗАЦИЯ
         // ============================================
         
-        // Устанавливаем начальный статус
-        updateStatus('⚫ Нажмите для запуска');
-        
+        updateStatusMessage('⚫ Нажмите для запуска');
     </script>
 </body>
 </html>
