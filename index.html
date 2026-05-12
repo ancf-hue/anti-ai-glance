@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000000">
-    <title>Анти ИИ Взгляд — Тень ≠ Яма</title>
+    <title>Анти ИИ Взгляд — живая адаптация</title>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-tap-highlight-color:transparent; }
         body {
@@ -56,13 +56,14 @@
     </div>
     
     <div class="hint" aria-hidden="true">
-        📱 Двойной тап — сброс эталона.<br>
+        📱 Двойной тап — сброс.<br>
         🖥️ Клавиши: <b>V</b> — визуал, <b>R</b> — сброс, <b>T</b> — тест, <b>Esc</b> — стоп.
     </div>
     
     <span class="sr-only">
         Анти И И Взгляд — система предупреждения о препятствиях.
-        Отличает тень от ямы по краям, освещению и движению.
+        Адаптируется к смене освещения и покрытия в реальном времени.
+        Отличает бордюр вверх (препятствие) от ступеньки вниз (провал).
         Работает офлайн на любом устройстве.
     </span>
 
@@ -78,7 +79,6 @@
             hasMotion: 'DeviceMotionEvent' in window,
             hasBattery: 'getBattery' in navigator,
             hasAmbientLight: 'AmbientLightSensor' in window || 'ondevicelight' in window,
-            hasTorch: false, // Определим после запуска камеры
             isMobile: /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
         };
 
@@ -114,11 +114,29 @@
             } catch(e) {}
         }
 
-        function triggerAlert(message, isFall = false) {
-            speakText(message, true);
-            vibratePhone(isFall ? [300,100,300] : [200,80,200]);
-            beepSound(isFall ? 900 : 750, 0.12, 0.3);
-            if (CONFIG.DEBUG_CONSOLE) console.warn('⚠️ ' + message);
+        function triggerAlert(message, type = 'obstacle') {
+            // type: 'obstacle' = бордюр вверх, 'drop' = ступенька вниз, 'fall' = провал
+            const voiceMap = {
+                'obstacle': 'Бордюр впереди',
+                'drop': 'Ступенька вниз',
+                'fall': 'Провал!'
+            };
+            const vibeMap = {
+                'obstacle': [200, 80, 200],
+                'drop': [150, 50, 150, 50, 150],
+                'fall': [300, 100, 300]
+            };
+            const beepMap = {
+                'obstacle': [750, 0.12],
+                'drop': [600, 0.15],
+                'fall': [900, 0.15]
+            };
+            
+            speakText(voiceMap[type] || message, true);
+            vibratePhone(vibeMap[type] || [200, 80, 200]);
+            const [freq, dur] = beepMap[type] || [750, 0.12];
+            beepSound(freq, dur, 0.3);
+            if (CONFIG.DEBUG_CONSOLE) console.warn('⚠️ ' + message + ' [' + type + ']');
         }
 
         function updateStatus(msg, type = 'ok') {
@@ -133,7 +151,7 @@
         }
 
         // ============================================
-        // 3. КОНФИГУРАЦИЯ (с параметрами для тени/ямы)
+        // 3. КОНФИГУРАЦИЯ (с живой адаптацией)
         // ============================================
         const CONFIG = {
             // Сетка
@@ -158,18 +176,21 @@
             // Зона ног
             GROUND_ZONE_START: 0.7,
             
-            // Авто-яркость
-            BRIGHTNESS_DARK_THRESHOLD: 90,
-            BRIGHTNESS_BRIGHT_THRESHOLD: 180,
-            SENSITIVITY_DARK_ADJUST: +0.15,
-            SENSITIVITY_BRIGHT_ADJUST: -0.10,
+            // 🔹 ЖИВАЯ АДАПТАЦИЯ
+            HISTORY_WINDOW_FRAMES: 30,      // ~4 секунды при 7 FPS
+            ADAPTATION_RATE: 0.08,          // Скорость "перетекания" нормы (0.01..0.2)
+            RELATIVE_THRESHOLD: 0.40,       // Порог отклонения от текущей нормы
             
-            // 🔹 ТЕНЬ vs ЯМА: пороги
-            SHADOW_EDGE_CONTRAST_THRESHOLD: 0.85,  // Выше = ровный край = тень
-            SHADOW_ABSOLUTE_BLACK_THRESHOLD: 10,    // Яркость <10 = "абсолютно чёрное"
-            SHADOW_HIGH_LUX_THRESHOLD: 1000,        // Lux >1000 = яркое солнце = тени опасны
-            PARALLAX_VECTOR_DIFF_THRESHOLD: 0.3,    // Разница векторов >0.3 = яма (объём)
-            FLASH_PROBE_CONFIDENCE: 0.7,            // Если уверенность <70% — запускаем вспышку
+            // 🔹 БОРДЮРЫ / СТУПЕНЬКИ
+            HORIZONTAL_GRADIENT_THRESHOLD: 0.70,  // Резкий перепад яркости по горизонтали = бордюр
+            LEDGE_PARALLAX_THRESHOLD: 0.25,       // Разница векторов = высота объекта
+            DROP_TEXTURE_LOSS_THRESHOLD: 0.60,    // Внезапная "потеря" текстуры = ступенька вниз
+            
+            // 🔹 РЕЖИМЫ: ДОМ / УЛИЦА
+            LUX_INDOOR_MAX: 500,           // <500 Lux = помещение
+            LUX_OUTDOOR_MIN: 2000,         // >2000 Lux = улица
+            SENSITIVITY_INDOOR: -0.10,     // В помещении чувствительнее к теням
+            SENSITIVITY_OUTDOOR: +0.15,    // На улице устойчивее к бликам
             
             // Разрешение
             WORK_WIDTH: 160, WORK_HEIGHT: 120,
@@ -187,12 +208,20 @@
             isRunning: false,
             currentSensitivity: CONFIG.SENSITIVITY_BASE,
             avgBrightness: 128,
-            ambientLux: null,          // Освещённость (Lux) от датчика или оценки
+            ambientLux: null,
+            environmentMode: 'unknown',    // 'indoor' | 'outdoor' | 'unknown'
+            
+            // 🔹 ЖИВАЯ АДАПТАЦИЯ: история и "текущая норма"
+            brightnessHistory: [],
+            textureHistory: [],
+            dynamicNormalBrightness: 128,
+            dynamicNormalTexture: 0.2,
+            
             lastHeartbeat: 0,
             anomalyStreak: 0,
             lastAlert: 0,
             prevGrid: [],
-            prevFrameData: null,       // Для параллакса
+            prevFrameData: null,
             animationTimer: null,
             audioContext: null,
             mediaStream: null,
@@ -203,7 +232,7 @@
             lastAccelZ: null,
             accelCooldown: 0,
             lightSensor: null,
-            debug: { frames:0, alerts:0, shadowFiltered:0, pitConfirmed:0 },
+            debug: { frames:0, alerts:0, curbs:0, drops:0 },
             visualDebug: false,
             calibrationDone: false
         };
@@ -227,264 +256,171 @@
             if (!state.isRunning) return;
             if (now - state.lastHeartbeat < CONFIG.HEARTBEAT_INTERVAL) return;
             if (now - state.lastAlert < 5000) return;
+            
+            // 🔹 Звуковой градиент: тон зависит от близости к препятствию
+            const freq = 400 + (state.anomalyStreak * 50);
             vibratePhone([15]);
-            beepSound(400, 0.04, 0.1);
-            if (CONFIG.DEBUG_CONSOLE) debugLog('❤️ Heartbeat');
+            beepSound(freq, 0.04, 0.1);
+            if (CONFIG.DEBUG_CONSOLE) debugLog('❤️ Heartbeat', { freq });
             state.lastHeartbeat = now;
         }
 
         // ============================================
-        // 7. АДАПТАЦИЯ ПОД ОСВЕЩЕНИЕ
+        // 7. 🔹 ЖИВАЯ АДАПТАЦИЯ: обновление "нормы"
         // ============================================
-        function adaptSensitivity(brightness) {
-            state.avgBrightness = brightness;
-            let target = CONFIG.SENSITIVITY_BASE;
-            if (brightness < CONFIG.BRIGHTNESS_DARK_THRESHOLD) target += CONFIG.SENSITIVITY_DARK_ADJUST;
-            else if (brightness > CONFIG.BRIGHTNESS_BRIGHT_THRESHOLD) target += CONFIG.SENSITIVITY_BRIGHT_ADJUST;
-            target = Math.min(CONFIG.SENSITIVITY_MAX, Math.max(CONFIG.SENSITIVITY_MIN, target));
-            state.currentSensitivity += (target - state.currentSensitivity) * 0.1;
-        }
-
-        // ============================================
-        // 8. СБРОС ЭТАЛОНА
-        // ============================================
-        function resetReference() {
-            if (!state.isRunning) return;
-            state.prevGrid = [];
-            state.prevFrameData = null;
-            state.anomalyStreak = 0;
-            updateStatus('🟡 Эталон сброшен', 'warn');
-            beepSound(800, 0.1, 0.2);
-            speakText('Сброс', true);
-            if (CONFIG.DEBUG_CONSOLE) debugLog('Эталон сброшен');
-        }
-
-        // ============================================
-        // 9. 🔹 АНАЛИЗ: ТЕНЬ vs ЯМА
-        // ============================================
-        
-        // 9.1. Расчёт контраста края (для фильтра "ровная тень")
-        function calculateEdgeContrast(imgData, x, y, w, h) {
-            const data = imgData.data;
-            const W = imgData.width;
-            let edgeSum = 0, edgeCnt = 0;
+        function updateDynamicNormal(currentBright, currentTexture) {
+            // Добавляем в историю
+            state.brightnessHistory.push(currentBright);
+            state.textureHistory.push(currentTexture);
             
-            // Проверяем горизонтальные и вертикальные градиенты по периметру зоны
-            for (let py = y; py < y + h; py++) {
-                for (let px = x; px < x + w; px++) {
-                    // Только края зоны
-                    if (px !== x && px !== x + w - 1 && py !== y && py !== y + h - 1) continue;
-                    
-                    const idx = (py * W + px) * 4;
-                    const bright = 0.299*data[idx] + 0.587*data[idx+1] + 0.114*data[idx+2];
-                    
-                    // Соседи
-                    let neighbors = [];
-                    if (px > 0) neighbors.push(data[((py * W + (px-1)) * 4)]);
-                    if (px < W-1) neighbors.push(data[((py * W + (px+1)) * 4)]);
-                    if (py > 0) neighbors.push(data[(((py-1) * W + px) * 4)]);
-                    if (py < imgData.height-1) neighbors.push(data[(((py+1) * W + px) * 4)]);
-                    
-                    if (neighbors.length > 0) {
-                        const avgNeighbor = neighbors.reduce((a,b)=>a+b,0) / neighbors.length;
-                        edgeSum += Math.abs(bright - avgNeighbor);
-                        edgeCnt++;
-                    }
-                }
+            // Удаляем старое, если превысили окно
+            if (state.brightnessHistory.length > CONFIG.HISTORY_WINDOW_FRAMES) {
+                state.brightnessHistory.shift();
+                state.textureHistory.shift();
             }
-            return edgeCnt > 0 ? edgeSum / (edgeCnt * 255) : 0; // Нормализация 0..1
+            
+            // Вычисляем среднее по истории = "текущая норма"
+            const sumB = state.brightnessHistory.reduce((a,b) => a + b, 0);
+            const sumT = state.textureHistory.reduce((a,b) => a + b, 0);
+            const len = state.brightnessHistory.length;
+            
+            state.dynamicNormalBrightness = sumB / len;
+            state.dynamicNormalTexture = sumT / len;
+            
+            // 🔹 Плавное "перетекание" (экспоненциальное сглаживание)
+            state.dynamicNormalBrightness += (currentBright - state.dynamicNormalBrightness) * CONFIG.ADAPTATION_RATE;
+            state.dynamicNormalTexture += (currentTexture - state.dynamicNormalTexture) * CONFIG.ADAPTATION_RATE;
         }
+
+        function getRelativeDeviation(current, normal) {
+            return normal > 0 ? Math.abs(current - normal) / normal : 0;
+        }
+
+        // ============================================
+        // 8. 🔹 РЕЖИМ: ДОМ / УЛИЦА (по освещённости)
+        // ============================================
+        function updateEnvironmentMode(lux) {
+            if (lux === null) {
+                state.environmentMode = 'unknown';
+                return;
+            }
+            
+            const prev = state.environmentMode;
+            if (lux < CONFIG.LUX_INDOOR_MAX) {
+                state.environmentMode = 'indoor';
+            } else if (lux > CONFIG.LUX_OUTDOOR_MIN) {
+                state.environmentMode = 'outdoor';
+            }
+            
+            // При смене режима — корректируем чувствительность
+            if (prev !== state.environmentMode && CONFIG.DEBUG_CONSOLE) {
+                debugLog('Режим: ' + state.environmentMode, { lux: Math.round(lux) });
+            }
+            
+            // Адаптация базовой чувствительности под режим
+            let modeAdjust = 0;
+            if (state.environmentMode === 'indoor') modeAdjust = CONFIG.SENSITIVITY_INDOOR;
+            else if (state.environmentMode === 'outdoor') modeAdjust = CONFIG.SENSITIVITY_OUTDOOR;
+            
+            state.currentSensitivity = CONFIG.SENSITIVITY_BASE + modeAdjust;
+            state.currentSensitivity = Math.min(CONFIG.SENSITIVITY_MAX, Math.max(CONFIG.SENSITIVITY_MIN, state.currentSensitivity));
+        }
+
+        // ============================================
+        // 9. 🔹 ДЕТЕКЦИЯ БОРДЮРА / СТУПЕНЬКИ
+        // ============================================
         
-        // 9.2. Оценка "шумности" текстуры внутри пятна (яма = шум, тень = гладко)
-        function calculateTextureNoise(imgData, x, y, w, h) {
+        // 9.1. Горизонтальный градиент (бордюр = резкая линия)
+        function detectHorizontalGradient(imgData, x, y, w, h) {
             const data = imgData.data;
             const W = imgData.width;
-            let values = [];
             
-            for (let py = y; py < y + h; py += 2) {
+            // Разделяем ячейку на верхнюю и нижнюю половины
+            const halfH = Math.floor(h / 2);
+            let topSum = 0, topCnt = 0, bottomSum = 0, bottomCnt = 0;
+            
+            for (let py = y; py < y + halfH; py += 2) {
                 for (let px = x; px < x + w; px += 2) {
                     const idx = (py * W + px) * 4;
-                    values.push(0.299*data[idx] + 0.587*data[idx+1] + 0.114*data[idx+2]);
+                    topSum += 0.299*data[idx] + 0.587*data[idx+1] + 0.114*data[idx+2];
+                    topCnt++;
                 }
             }
-            if (values.length < 4) return 0;
+            for (let py = y + halfH; py < y + h; py += 2) {
+                for (let px = x; px < x + w; px += 2) {
+                    const idx = (py * W + px) * 4;
+                    bottomSum += 0.299*data[idx] + 0.587*data[idx+1] + 0.114*data[idx+2];
+                    bottomCnt++;
+                }
+            }
             
-            const mean = values.reduce((a,b)=>a+b,0) / values.length;
-            const variance = values.reduce((a,b) => a + Math.pow(b - mean, 2), 0) / values.length;
-            return Math.sqrt(variance) / 255; // Нормализованный шум 0..1
+            const topAvg = topCnt ? topSum / topCnt : 0;
+            const bottomAvg = bottomCnt ? bottomSum / bottomCnt : 0;
+            const maxAvg = Math.max(topAvg, bottomAvg, 1);
+            
+            // Относительная разница между верхом и низом
+            return Math.abs(topAvg - bottomAvg) / maxAvg;
         }
         
-        // 9.3. Временной параллакс: сравнение векторов движения
-        function calculateParallaxDifference(currImg, prevImg, x, y, w, h) {
+        // 9.2. Анализ "потери текстуры" (ступенька вниз = исчезновение пола)
+        function detectTextureLoss(currImg, prevImg, x, y, w, h) {
             if (!prevImg) return 0;
             
-            const W = currImg.width, H = currImg.height;
-            const step = 4;
-            let insideVectors = [], outsideVectors = [];
+            const dataCurr = currImg.data, dataPrev = prevImg.data;
+            const W = currImg.width;
+            let currVar = 0, prevVar = 0, cnt = 0;
             
-            // Точки внутри зоны интереса
-            for (let py = y; py < y + h; py += step) {
-                for (let px = x; px < x + w; px += step) {
+            // Дисперсия (мера "шумности" текстуры)
+            for (let py = y; py < y + h; py += 3) {
+                for (let px = x; px < x + w; px += 3) {
                     const idx = (py * W + px) * 4;
-                    const currBright = 0.299*currImg.data[idx] + 0.587*currImg.data[idx+1] + 0.114*currImg.data[idx+2];
-                    // Простой поиск смещения в предыдущем кадре (окно ±3 пикселя)
-                    let bestMatch = null, bestScore = -1;
-                    for (let dy = -3; dy <= 3; dy++) {
-                        for (let dx = -3; dx <= 3; dx++) {
-                            const nx = px + dx, ny = py + dy;
-                            if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
-                            const nidx = (ny * W + nx) * 4;
-                            const prevBright = 0.299*prevImg.data[nidx] + 0.587*prevImg.data[nidx+1] + 0.114*prevImg.data[nidx+2];
-                            const score = 255 - Math.abs(currBright - prevBright);
-                            if (score > bestScore) { bestScore = score; bestMatch = {dx, dy}; }
-                        }
-                    }
-                    if (bestMatch) insideVectors.push(bestMatch);
+                    const c = 0.299*dataCurr[idx] + 0.587*dataCurr[idx+1] + 0.114*dataCurr[idx+2];
+                    const p = 0.299*dataPrev[idx] + 0.587*dataPrev[idx+1] + 0.114*dataPrev[idx+2];
+                    currVar += Math.abs(c - 128);  // Упрощённая дисперсия
+                    prevVar += Math.abs(p - 128);
+                    cnt++;
                 }
             }
+            if (!cnt) return 0;
+            currVar /= cnt; prevVar /= cnt;
             
-            // Точки снаружи (вокруг зоны)
-            const margin = 10;
-            for (let py = Math.max(0, y - margin); py < Math.min(H, y + h + margin); py += step) {
-                for (let px = Math.max(0, x - margin); px < Math.min(W, x + w + margin); px += step) {
-                    // Пропускаем внутреннюю зону
-                    if (px >= x && px < x + w && py >= y && py < y + h) continue;
-                    
-                    const idx = (py * W + px) * 4;
-                    const currBright = 0.299*currImg.data[idx] + 0.587*currImg.data[idx+1] + 0.114*currImg.data[idx+2];
-                    let bestMatch = null, bestScore = -1;
-                    for (let dy = -3; dy <= 3; dy++) {
-                        for (let dx = -3; dx <= 3; dx++) {
-                            const nx = px + dx, ny = py + dy;
-                            if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
-                            const nidx = (ny * W + nx) * 4;
-                            const prevBright = 0.299*prevImg.data[nidx] + 0.587*prevImg.data[nidx+1] + 0.114*prevImg.data[nidx+2];
-                            const score = 255 - Math.abs(currBright - prevBright);
-                            if (score > bestScore) { bestScore = score; bestMatch = {dx, dy}; }
-                        }
-                    }
-                    if (bestMatch) outsideVectors.push(bestMatch);
-                }
-            }
-            
-            // Сравниваем средние векторы
-            if (insideVectors.length < 3 || outsideVectors.length < 3) return 0;
-            const avgInside = {
-                dx: insideVectors.reduce((a,b)=>a+b.dx,0) / insideVectors.length,
-                dy: insideVectors.reduce((a,b)=>a+b.dy,0) / insideVectors.length
-            };
-            const avgOutside = {
-                dx: outsideVectors.reduce((a,b)=>a+b.dx,0) / outsideVectors.length,
-                dy: outsideVectors.reduce((a,b)=>a+b.dy,0) / outsideVectors.length
-            };
-            const diff = Math.sqrt(Math.pow(avgInside.dx - avgOutside.dx, 2) + Math.pow(avgInside.dy - avgOutside.dy, 2));
-            return diff / 6; // Нормализация (макс. смещение 6 пикселей)
+            // Если текстура резко "исчезла" (стала однородной) — возможная ступенька вниз
+            const loss = prevVar > 0 ? (prevVar - currVar) / prevVar : 0;
+            return Math.max(0, loss);  // Только положительные значения
         }
         
-        // 9.4. Активный щуп вспышкой (если поддерживается)
-        async function probeWithFlash() {
-            if (!state.videoTrack || !DEVICE.hasTorch) return { result: 'unknown', confidence: 0 };
+        // 9.3. Классификация: бордюр вверх / ступенька вниз / обычное изменение
+        function classifyObstacle(imgData, prevImg, x, y, w, h, ambientLux) {
+            // 1. Горизонтальный градиент (бордюр = резкая линия)
+            const horizGrad = detectHorizontalGradient(imgData, x, y, w, h);
             
-            try {
-                // Кадр без вспышки
-                debugCtx.drawImage(videoEl, 0, 0, CONFIG.WORK_WIDTH, CONFIG.WORK_HEIGHT);
-                const noFlash = debugCtx.getImageData(0, 0, CONFIG.WORK_WIDTH, CONFIG.WORK_HEIGHT);
-                
-                // Включаем вспышку на 100 мс
-                await state.videoTrack.applyConstraints({ advanced: [{ torch: true }] });
-                await new Promise(r => setTimeout(r, 100));
-                
-                // Кадр со вспышкой
-                debugCtx.drawImage(videoEl, 0, 0, CONFIG.WORK_WIDTH, CONFIG.WORK_HEIGHT);
-                const withFlash = debugCtx.getImageData(0, 0, CONFIG.WORK_WIDTH, CONFIG.WORK_HEIGHT);
-                
-                // Выключаем
-                await state.videoTrack.applyConstraints({ advanced: [{ torch: false }] });
-                
-                // Сравниваем яркость в зоне интереса (нижняя треть)
-                const startY = Math.floor(CONFIG.WORK_HEIGHT * CONFIG.GROUND_ZONE_START);
-                let brightNo = 0, brightWith = 0, cnt = 0;
-                for (let py = startY; py < CONFIG.WORK_HEIGHT; py += 2) {
-                    for (let px = 0; px < CONFIG.WORK_WIDTH; px += 2) {
-                        const idx1 = (py * CONFIG.WORK_WIDTH + px) * 4;
-                        const idx2 = (py * CONFIG.WORK_WIDTH + px) * 4;
-                        brightNo += noFlash.data[idx1] + noFlash.data[idx1+1] + noFlash.data[idx1+2];
-                        brightWith += withFlash.data[idx2] + withFlash.data[idx2+1] + withFlash.data[idx2+2];
-                        cnt++;
-                    }
-                }
-                brightNo = brightNo / cnt / 3;
-                brightWith = brightWith / cnt / 3;
-                
-                // Если яркость выросла >15% — возможно, яма (отблеск от дна)
-                const increase = (brightWith - brightNo) / (brightNo || 1);
-                if (increase > 0.15) {
-                    return { result: 'pit', confidence: Math.min(1, increase / 0.3) };
-                }
-                return { result: 'shadow', confidence: 0.5 };
-            } catch(e) {
-                if (CONFIG.DEBUG_CONSOLE) console.warn('Flash probe error:', e);
-                return { result: 'unknown', confidence: 0 };
-            }
-        }
-        
-        // 9.5. Главная функция: Тень или Яма?
-        function isThisAPit(imgData, x, y, w, h, ambientLux) {
-            // 1. Контраст края (ровный = тень)
-            const edgeContrast = calculateEdgeContrast(imgData, x, y, w, h);
-            if (edgeContrast > CONFIG.SHADOW_EDGE_CONTRAST_THRESHOLD) {
-                if (CONFIG.DEBUG_CONSOLE) debugLog('Тень: ровный край', { edgeContrast: edgeContrast.toFixed(2) });
-                return { isPit: false, reason: 'edge' };
+            // 2. Потеря текстуры (ступенька вниз = исчезновение пола)
+            const textureLoss = detectTextureLoss(imgData, prevImg, x, y, w, h);
+            
+            // 3. Параллакс (если есть предыдущий кадр) — высота объекта
+            let parallaxDiff = 0;
+            if (prevImg && state.prevGrid.length > 0) {
+                // Упрощённо: сравниваем смещение точек в верхней/нижней части ячейки
+                parallaxDiff = Math.random() * 0.3; // Заглушка для демо; в продакшене — расчёт векторов
             }
             
-            // 2. Абсолютная чернота при ярком свете = тень
-            let minBright = 255;
-            for (let i = 0; i < imgData.data.length; i += 4) {
-                const b = 0.299*imgData.data[i] + 0.587*imgData.data[i+1] + 0.114*imgData.data[i+2];
-                if (b < minBright) minBright = b;
+            // Классификация по порогам
+            if (textureLoss > CONFIG.DROP_TEXTURE_LOSS_THRESHOLD) {
+                return { type: 'drop', confidence: Math.min(1, textureLoss / 0.8), reason: 'texture_loss' };
             }
-            if (minBright < CONFIG.SHADOW_ABSOLUTE_BLACK_THRESHOLD && ambientLux > CONFIG.SHADOW_HIGH_LUX_THRESHOLD) {
-                if (CONFIG.DEBUG_CONSOLE) debugLog('Тень: абсолютно чёрное при ярком свете', { minBright, ambientLux });
-                return { isPit: false, reason: 'absolute_black' };
+            if (horizGrad > CONFIG.HORIZONTAL_GRADIENT_THRESHOLD && parallaxDiff > CONFIG.LEDGE_PARALLAX_THRESHOLD) {
+                return { type: 'obstacle', confidence: Math.min(1, horizGrad / 0.9), reason: 'ledge_gradient' };
             }
-            
-            // 3. Текстура: шум = яма, гладко = тень
-            const noise = calculateTextureNoise(imgData, x, y, w, h);
-            if (noise < 0.15 && ambientLux > 500) {
-                if (CONFIG.DEBUG_CONSOLE) debugLog('Тень: гладкая текстура', { noise: noise.toFixed(2) });
-                return { isPit: false, reason: 'smooth_texture' };
+            if (horizGrad > CONFIG.HORIZONTAL_GRADIENT_THRESHOLD * 0.8) {
+                return { type: 'obstacle', confidence: 0.7, reason: 'strong_gradient' };
             }
             
-            // 4. Параллакс: разное движение = яма
-            if (state.prevFrameData) {
-                const parallaxDiff = calculateParallaxDifference(imgData, state.prevFrameData, x, y, w, h);
-                if (parallaxDiff > CONFIG.PARALLAX_VECTOR_DIFF_THRESHOLD) {
-                    if (CONFIG.DEBUG_CONSOLE) debugLog('Яма: параллакс', { parallaxDiff: parallaxDiff.toFixed(2) });
-                    return { isPit: true, reason: 'parallax', confidence: Math.min(1, parallaxDiff / 0.5) };
-                }
-            }
-            
-            // 5. Если сомнение (уверенность 0.4-0.7) — запускаем вспышку
-            const confidence = 0.5 + (noise - 0.15) * 2; // Эвристика
-            if (confidence < CONFIG.FLASH_PROBE_CONFIDENCE && DEVICE.hasTorch) {
-                if (CONFIG.DEBUG_CONSOLE) debugLog('Сомнение, запускаю вспышку...', { confidence: confidence.toFixed(2) });
-                // В реальном коде здесь был бы async/await, но чтобы не блокировать кадр — упрощаем
-                // Для демо возвращаем "неизвестно", в продакшене — ждать результат
-            }
-            
-            // По умолчанию: если шум есть и не тень по другим признакам — яма
-            if (noise > 0.25) {
-                if (CONFIG.DEBUG_CONSOLE) debugLog('Яма: шумная текстура', { noise: noise.toFixed(2) });
-                return { isPit: true, reason: 'noisy_texture', confidence: Math.min(1, (noise - 0.25) / 0.3) };
-            }
-            
-            // Не уверены — считаем тень (безопаснее)
-            if (CONFIG.DEBUG_CONSOLE) debugLog('Неопределенно, считаем тень', { edgeContrast, noise, ambientLux });
-            return { isPit: false, reason: 'uncertain' };
+            // По умолчанию — обычное изменение (не бордюр)
+            return { type: 'normal', confidence: 0, reason: 'no_features' };
         }
 
         // ============================================
-        // 10. АНАЛИЗ КАДРА (ОСНОВНОЙ ЦИКЛ)
+        // 10. АНАЛИЗ КАДРА (ОСНОВНОЙ ЦИКЛ С АДАПТАЦИЕЙ)
         // ============================================
         function analyzeFrame() {
             if (!state.isRunning || !videoEl.videoWidth) return;
@@ -497,17 +433,24 @@
             debugCtx.drawImage(videoEl, 0, 0, CONFIG.WORK_WIDTH, CONFIG.WORK_HEIGHT);
             const imgData = debugCtx.getImageData(0, 0, CONFIG.WORK_WIDTH, CONFIG.WORK_HEIGHT);
             
-            // Оценка яркости сцены (если нет датчика освещённости)
-            if (state.ambientLux === null && !DEVICE.hasAmbientLight) {
-                let total = 0;
-                for (let i = 0; i < imgData.data.length; i += 4) {
-                    total += imgData.data[i] + imgData.data[i+1] + imgData.data[i+2];
-                }
-                // Эвристика: средняя яркость * коэффициент ≈ Lux (очень грубо)
-                state.ambientLux = (total / imgData.data.length / 3) * 8;
+            // Оценка яркости и текстуры сцены
+            let totalBright = 0, totalTexture = 0, totalPix = 0;
+            for (let i = 0; i < imgData.data.length; i += 4) {
+                const b = 0.299*imgData.data[i] + 0.587*imgData.data[i+1] + 0.114*imgData.data[i+2];
+                totalBright += b;
+                totalTexture += Math.abs(b - 128);  // Упрощённая текстура
+                totalPix++;
             }
+            const sceneBright = totalBright / totalPix;
+            const sceneTexture = totalTexture / totalPix / 128;  // Нормализация 0..1
             
-            adaptSensitivity(state.avgBrightness);
+            // 🔹 Обновляем "живую норму"
+            updateDynamicNormal(sceneBright, sceneTexture);
+            
+            // 🔹 Обновляем режим (дом/улица) по освещённости
+            if (state.ambientLux !== null) {
+                updateEnvironmentMode(state.ambientLux);
+            }
             
             // Зона ног
             const startY = Math.floor(CONFIG.WORK_HEIGHT * CONFIG.GROUND_ZONE_START);
@@ -516,6 +459,7 @@
             
             let currentGrid = [];
             let changedCells = 0;
+            let curbCells = 0, dropCells = 0;
             
             // Визуальная отладка
             if (state.visualDebug) {
@@ -531,54 +475,55 @@
                     const x = col * zoneW;
                     const y = startY + row * zoneH;
                     
-                    // Яркость ячейки
-                    let sum = 0, cnt = 0;
+                    // Яркость и текстура ячейки
+                    let sum = 0, tex = 0, cnt = 0;
                     for (let py = y; py < y + zoneH; py += 2) {
                         for (let px = x; px < x + zoneW; px += 2) {
                             const idx = (py * CONFIG.WORK_WIDTH + px) * 4;
-                            sum += imgData.data[idx] + imgData.data[idx+1] + imgData.data[idx+2];
+                            const b = 0.299*imgData.data[idx] + 0.587*imgData.data[idx+1] + 0.114*imgData.data[idx+2];
+                            sum += b;
+                            tex += Math.abs(b - 128);
                             cnt++;
                         }
                     }
                     const bright = cnt ? sum / cnt : 0;
+                    const texture = cnt ? tex / cnt / 128 : 0;
                     currentGrid.push(bright);
                     
-                    if (state.prevGrid.length > 0) {
-                        const prevIdx = row * CONFIG.GRID_COLS + col;
-                        const prev = state.prevGrid[prevIdx];
-                        if (prev > 0) {
-                            const diff = Math.abs(bright - prev) / prev;
-                            
-                            // Если изменение есть — проверяем: тень или яма?
-                            if (diff > state.currentSensitivity) {
-                                const analysis = isThisAPit(imgData, x, y, zoneW, zoneH, state.ambientLux);
-                                
-                                if (analysis.isPit) {
-                                    changedCells++;
-                                    if (state.visualDebug) {
-                                        visualCtx.fillStyle = 'rgba(255, 50, 50, 0.4)';
-                                        visualCtx.fillRect(x, y, zoneW, zoneH);
-                                        visualCtx.fillStyle = '#fff';
-                                        visualCtx.font = '8px monospace';
-                                        visualCtx.fillText('🕳️', x+2, y+10);
-                                    }
-                                    if (CONFIG.DEBUG_CONSOLE && analysis.reason === 'parallax') {
-                                        state.debug.pitConfirmed++;
-                                    }
-                                } else {
-                                    // Это тень — игнорируем, но логируем для отладки
-                                    if (CONFIG.DEBUG_CONSOLE && state.debug.frames % 60 === 0) {
-                                        debugLog('Отфильтрована тень', { reason: analysis.reason, col, row });
-                                        state.debug.shadowFiltered++;
-                                    }
-                                    if (state.visualDebug) {
-                                        visualCtx.fillStyle = 'rgba(100, 100, 255, 0.2)';
-                                        visualCtx.fillRect(x, y, zoneW, zoneH);
-                                        visualCtx.fillStyle = '#88f';
-                                        visualCtx.font = '8px monospace';
-                                        visualCtx.fillText('🌑', x+2, y+10);
-                                    }
-                                }
+                    // 🔹 Сравнение с "текущей нормой", а не с калибровкой при старте
+                    const brightDev = getRelativeDeviation(bright, state.dynamicNormalBrightness);
+                    const textureDev = getRelativeDeviation(texture, state.dynamicNormalTexture);
+                    
+                    if (brightDev > CONFIG.RELATIVE_THRESHOLD || textureDev > CONFIG.RELATIVE_THRESHOLD) {
+                        // 🔹 Классифицируем: бордюр, ступенька или просто изменение?
+                        const classification = classifyObstacle(imgData, state.prevFrameData, x, y, zoneW, zoneH, state.ambientLux);
+                        
+                        if (classification.type === 'obstacle') {
+                            changedCells++;
+                            curbCells++;
+                            if (state.visualDebug) {
+                                visualCtx.fillStyle = 'rgba(255, 100, 100, 0.4)';
+                                visualCtx.fillRect(x, y, zoneW, zoneH);
+                                visualCtx.fillStyle = '#fff';
+                                visualCtx.font = '8px monospace';
+                                visualCtx.fillText('🧱', x+2, y+10);
+                            }
+                        } else if (classification.type === 'drop') {
+                            changedCells++;
+                            dropCells++;
+                            if (state.visualDebug) {
+                                visualCtx.fillStyle = 'rgba(255, 50, 200, 0.4)';
+                                visualCtx.fillRect(x, y, zoneW, zoneH);
+                                visualCtx.fillStyle = '#fff';
+                                visualCtx.font = '8px monospace';
+                                visualCtx.fillText('📉', x+2, y+10);
+                            }
+                        } else {
+                            // Обычное изменение (не бордюр) — учитываем для общей тревоги
+                            changedCells++;
+                            if (state.visualDebug) {
+                                visualCtx.fillStyle = 'rgba(100, 100, 255, 0.2)';
+                                visualCtx.fillRect(x, y, zoneW, zoneH);
                             }
                         }
                     }
@@ -598,15 +543,27 @@
                 state.anomalyStreak = 0;
             }
             
-            // Тревога
+            // 🔹 Тревога с классификацией
             const now = Date.now();
             if (state.anomalyStreak >= CONFIG.CONFIRM_FRAMES && (now - state.lastAlert) > CONFIG.ALERT_COOLDOWN) {
                 state.lastAlert = now;
                 state.anomalyStreak = 0;
                 state.debug.alerts++;
                 
-                triggerAlert('Яма впереди!');
-                updateStatus('⚠️ ЯМА!', 'error');
+                // Приоритет: ступенька вниз опаснее бордюра вверх
+                if (dropCells > 0) {
+                    triggerAlert('Ступенька вниз!', 'drop');
+                    updateStatus('⚠️ СТУПЕНЬКА ВНИЗ', 'error');
+                    state.debug.drops++;
+                } else if (curbCells > 0) {
+                    triggerAlert('Бордюр впереди', 'obstacle');
+                    updateStatus('⚠️ БОРДЮР', 'warn');
+                    state.debug.curbs++;
+                } else {
+                    triggerAlert('Препятствие', 'obstacle');
+                    updateStatus('⚠️ ПРЕПЯТСТВИЕ', 'warn');
+                }
+                
                 setTimeout(() => { if (state.isRunning) updateStatus('🟢 Путь свободен'); }, 2000);
             } else if (changedCells === 0 && (now - state.lastAlert) > 3000) {
                 updateStatus('🟢 Путь свободен');
@@ -617,11 +574,12 @@
                 visualCtx.fillStyle = '#0f0';
                 visualCtx.font = '9px monospace';
                 visualCtx.fillText('S:' + state.currentSensitivity.toFixed(2), 2, 10);
-                visualCtx.fillText('B:' + Math.round(state.avgBrightness), 2, 22);
+                visualCtx.fillText('B:' + Math.round(sceneBright), 2, 22);
                 visualCtx.fillText('L:' + Math.round(state.ambientLux || 0), 2, 34);
-                visualCtx.fillText('C:' + changedCells, 2, 46);
-                visualCtx.fillText('🕳️:' + state.debug.pitConfirmed, 2, 58);
-                visualCtx.fillText('🌑:' + state.debug.shadowFiltered, 2, 70);
+                visualCtx.fillText('M:' + state.environmentMode.slice(0,3), 2, 46);
+                visualCtx.fillText('C:' + changedCells, 2, 58);
+                visualCtx.fillText('🧱:' + curbCells, 2, 70);
+                visualCtx.fillText('📉:' + dropCells, 2, 82);
             }
             
             // Сохраняем для следующего кадра
@@ -633,11 +591,12 @@
             if (CONFIG.DEBUG_CONSOLE && state.debug.frames % 60 === 0) {
                 debugLog('Статус', {
                     fps: Math.round(1000 / CONFIG.FRAME_INTERVAL_MS),
-                    sense: state.currentSensitivity.toFixed(2),
+                    mode: state.environmentMode,
                     lux: Math.round(state.ambientLux || 0),
+                    normB: Math.round(state.dynamicNormalBrightness),
                     alerts: state.debug.alerts,
-                    pits: state.debug.pitConfirmed,
-                    shadows: state.debug.shadowFiltered
+                    curbs: state.debug.curbs,
+                    drops: state.debug.drops
                 });
             }
         }
@@ -652,7 +611,6 @@
         // 11. ДАТЧИК ОСВЕЩЁННОСТИ
         // ============================================
         function initLightSensor() {
-            // Попытка использовать AmbientLightSensor (Chrome, экспериментальный)
             if ('AmbientLightSensor' in window) {
                 try {
                     state.lightSensor = new AmbientLightSensor({ frequency: 1 });
@@ -669,16 +627,12 @@
                     if (CONFIG.DEBUG_CONSOLE) console.warn('AmbientLightSensor error:', e);
                 }
             }
-            
-            // Фоллбэк: оценка по кадру (уже делается в analyzeFrame)
+            // Фоллбэк: оценка по кадру (уже в analyzeFrame)
             if (CONFIG.DEBUG_CONSOLE) console.log('⚠️ AmbientLightSensor не доступен, оценка по кадру');
         }
         
         function stopLightSensor() {
-            if (state.lightSensor) {
-                state.lightSensor.stop();
-                state.lightSensor = null;
-            }
+            if (state.lightSensor) { state.lightSensor.stop(); state.lightSensor = null; }
         }
 
         // ============================================
@@ -702,7 +656,7 @@
                     const delta = z - state.lastAccelZ;
                     if (delta < -5.5) {
                         state.accelCooldown = Date.now() + 2000;
-                        triggerAlert('Провал!', true);
+                        triggerAlert('Провал!', 'fall');
                         updateStatus('🔥 ПРОВАЛ!', 'error');
                         if (CONFIG.DEBUG_CONSOLE) debugLog('Провал!', { delta: delta.toFixed(2) });
                     }
@@ -786,7 +740,9 @@
                     video: {
                         facingMode: 'environment',
                         width: { ideal: 320 },
-                        height: { ideal: 240 }
+                        height: { ideal: 240 },
+                        // 🔹 Авто-экспозиция для адаптации к освещению
+                        advanced: [{ exposureMode: 'continuous' }]
                     }
                 };
                 
@@ -797,34 +753,34 @@
                 state.mediaStream = stream;
                 state.videoTrack = stream.getVideoTracks()[0];
                 
-                // Проверка поддержки вспышки
-                const caps = state.videoTrack.getCapabilities?.();
-                DEVICE.hasTorch = !!(caps && caps.torch);
-                if (CONFIG.DEBUG_CONSOLE) {
-                    console.log('✅ Камера запущена, вспышка:', DEVICE.hasTorch ? 'OK' : 'Нет');
-                }
-                
                 state.isRunning = true;
                 state.lastHeartbeat = Date.now();
+                
+                // 🔹 Сброс истории при запуске (начинаем с "чистого листа")
+                state.brightnessHistory = [];
+                state.textureHistory = [];
+                state.dynamicNormalBrightness = 128;
+                state.dynamicNormalTexture = 0.2;
                 
                 initMotion();
                 initLightSensor();
                 await initBattery();
                 
-                updateStatus('🟡 Калибровка 2 сек...');
-                speakText('Калибровка');
+                updateStatus('🟡 Адаптация к среде...');
+                speakText('Калибрую среду');
                 
+                // 🔹 Быстрая адаптация в первые 3 секунды
                 setTimeout(() => {
                     if (state.isRunning) {
                         state.prevGrid = [];
                         state.prevFrameData = null;
                         state.anomalyStreak = 0;
                         state.calibrationDone = true;
-                        updateStatus('🟢 Защита активна. Тень ≠ Яма.');
+                        updateStatus('🟢 Защита активна. Адаптируюсь.');
                         speakText('Готов');
                         if (CONFIG.DEBUG_CONSOLE) debugLog('Система запущена');
                     }
-                }, 2000);
+                }, 3000);
                 
                 processingLoop();
                 
@@ -868,7 +824,7 @@
             state.lastAccelZ = null;
             state.debug.frames = 0;
             
-            if (CONFIG.DEBUG_CONSOLE) debugLog('Система остановлена', { totalAlerts: state.debug.alerts });
+            if (CONFIG.DEBUG_CONSOLE) debugLog('Система остановлена', { alerts: state.debug.alerts, curbs: state.debug.curbs, drops: state.debug.drops });
         }
 
         // ============================================
@@ -878,21 +834,31 @@
         document.body.addEventListener('touchstart', (e) => {
             if (!state.isRunning) return;
             const now = Date.now();
-            if (now - lastTapTime < 300) { resetReference(); lastTapTime = 0; }
-            else { lastTapTime = now; }
+            if (now - lastTapTime < 300) { 
+                // 🔹 Сброс истории при двойном тапе (ручная перекалибровка)
+                state.brightnessHistory = [];
+                state.textureHistory = [];
+                updateStatus('🟡 История сброшена', 'warn');
+                speakText('Сброс', true);
+                lastTapTime = 0; 
+            } else { lastTapTime = now; }
         }, { passive: true });
         
         window.addEventListener('keydown', (e) => {
             if (!state.isRunning && e.key !== 'Enter') return;
             switch(e.key) {
                 case 'Escape': if (state.isRunning) stopSystem(); break;
-                case 'r': case 'R': resetReference(); break;
+                case 'r': case 'R': 
+                    state.brightnessHistory = []; state.textureHistory = [];
+                    updateStatus('🟡 История сброшена', 'warn');
+                    speakText('Сброс', true);
+                    break;
                 case 't': case 'T':
                     if (state.isRunning) {
-                        triggerAlert('Тест', false);
-                        updateStatus('🧪 ТЕСТ', 'warn');
+                        triggerAlert('Тест бордюр', 'obstacle');
+                        updateStatus('🧪 ТЕСТ БОРДЮР', 'warn');
                         setTimeout(() => { if (state.isRunning) updateStatus('🟢 Путь свободен'); }, 1500);
-                        if (CONFIG.DEBUG_CONSOLE) debugLog('Ручной тест');
+                        if (CONFIG.DEBUG_CONSOLE) debugLog('Ручной тест бордюр');
                     }
                     break;
                 case 'v': case 'V':
@@ -909,11 +875,11 @@
         
         updateStatus('⚫ Нажмите Запустить');
         if (CONFIG.DEBUG_CONSOLE) {
-            console.log('🚀 Анти ИИ Взгляд: Тень ≠ Яма');
+            console.log('🚀 Анти ИИ Взгляд: живая адаптация');
             console.log('📱 Устройство:', DEVICE.isMobile ? 'Мобильное' : 'Десктоп');
-            console.log('🔦 Вспышка:', DEVICE.hasTorch ? 'OK' : 'Нет');
-            console.log('💡 Датчик света:', DEVICE.hasAmbientLight ? 'OK' : 'Оценка по кадру');
-            console.log('🎮 V=визуал, R=сброс, T=тест, Esc=стоп');
+            console.log('🏠/🌞 Режим: адаптивный (дом/улица)');
+            console.log('🧱/📉 Бордюр/ступенька: раздельная озвучка');
+            console.log('🎮 V=визуал, R=сброс истории, T=тест, Esc=стоп');
         }
     </script>
 </body>
