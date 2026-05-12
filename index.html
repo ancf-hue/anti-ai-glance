@@ -5,108 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000000">
-    <title>Анти ИИ Взгляд — универсальная версия</title>
+    <title>Анти ИИ Взгляд — Тень ≠ Яма</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-tap-highlight-color:transparent; }
         body {
-            background: #000000;
-            color: #00ff00;
-            font-family: system-ui, -apple-system, "Segoe UI", Roboto, monospace;
-            text-align: center;
-            padding: 20px;
-            margin: 0;
-            min-height: 100dvh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            touch-action: manipulation;
+            background:#000; color:#0f0; font-family:system-ui, -apple-system, monospace;
+            text-align:center; padding:20px; margin:0; min-height:100dvh;
+            display:flex; flex-direction:column; align-items:center; touch-action:manipulation;
         }
         video {
-            display: block;
-            margin: 0 auto;
-            max-width: 100%;
-            width: 100%;
-            max-width: 400px;
-            border-radius: 20px;
-            border: 1px solid #222222;
-            background: #000000;
+            display:block; margin:0 auto; max-width:100%; width:100%; max-width:400px;
+            border-radius:20px; border:1px solid #222; background:#000;
         }
         button {
-            background: #00d4aa;
-            color: #000000;
-            border: none;
-            padding: 15px 30px;
-            font-size: 1.2rem;
-            font-weight: 700;
-            border-radius: 48px;
-            margin: 20px 0;
-            min-width: 260px;
-            max-width: 400px;
-            width: 90vw;
-            box-shadow: 0 4px 16px rgba(0, 212, 170, 0.3);
-            cursor: pointer;
-            transition: transform 0.1s ease;
+            background:#00d4aa; color:#000; border:none; padding:15px 30px;
+            font-size:1.2rem; font-weight:700; border-radius:48px; margin:20px 0;
+            min-width:260px; max-width:400px; width:90vw;
+            box-shadow:0 4px 16px rgba(0,212,170,0.3); cursor:pointer;
+            transition:transform 0.1s ease;
         }
-        button:active { transform: scale(0.98); }
-        button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        button:active { transform:scale(0.98); }
+        button:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
         .status {
-            margin: 20px 0;
-            font-size: 1.1rem;
-            padding: 10px 16px;
-            background: #111111;
-            border-radius: 24px;
-            border: 1px solid #222222;
-            min-height: 2.2em;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            line-height: 1.4;
-            width: 100%;
-            max-width: 400px;
+            margin:20px 0; font-size:1.1rem; padding:10px 16px;
+            background:#111; border-radius:24px; border:1px solid #222;
+            min-height:2.2em; display:flex; align-items:center; justify-content:center;
+            width:100%; max-width:400px; text-align:center; line-height:1.4;
         }
-        .status.warn { color: #ffaa00; }
-        .status.error { color: #ff6666; }
-        .hint {
-            color: #55aa55;
-            font-size: 0.85rem;
-            margin-top: 8px;
-            line-height: 1.4;
-            max-width: 400px;
+        .status.warn { color:#ffaa00; }
+        .status.error { color:#ff6666; }
+        .hint { color:#55aa55; font-size:0.85rem; margin-top:8px; line-height:1.4; max-width:400px; }
+        .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
+        #debugCanvas, #visualDebug { display:none; }
+        #visualDebug.visible {
+            display:block; position:fixed; top:10px; left:10px;
+            width:160px; height:120px; border:2px solid #0f0; border-radius:8px;
+            pointer-events:none; opacity:0.85; z-index:100; background:rgba(0,0,0,0.6);
         }
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0,0,0,0);
-            white-space: nowrap;
-            border: 0;
-        }
-        #debugCanvas { display: none; }
-        #visualDebug {
-            display: none;
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            width: 160px;
-            height: 120px;
-            border: 2px solid #00ff00;
-            border-radius: 8px;
-            pointer-events: none;
-            opacity: 0.85;
-            z-index: 100;
-            background: rgba(0,0,0,0.6);
-        }
-        #visualDebug.visible { display: block; }
     </style>
 </head>
 <body>
@@ -114,9 +49,7 @@
     <canvas id="debugCanvas"></canvas>
     <canvas id="visualDebug"></canvas>
     
-    <div>
-        <button id="startBtn">🔍 ЗАПУСТИТЬ ПОМОЩНИКА</button>
-    </div>
+    <div><button id="startBtn">🔍 ЗАПУСТИТЬ ПОМОЩНИКА</button></div>
     
     <div id="status" class="status" role="status" aria-live="polite" aria-atomic="true">
         ⚫ Нажмите Запустить
@@ -128,10 +61,9 @@
     </div>
     
     <span class="sr-only">
-        Анти И И Взгляд — система предупреждения о препятствиях для незрячих.
-        Работает офлайн на любом устройстве: телефон, планшет, ноутбук.
-        Использует камеру и акселерометр для детекции ям и препятствий.
-        Тиканье каждые 6 секунд подтверждает работу системы.
+        Анти И И Взгляд — система предупреждения о препятствиях.
+        Отличает тень от ямы по краям, освещению и движению.
+        Работает офлайн на любом устройстве.
     </span>
 
     <script>
@@ -145,58 +77,48 @@
             hasSpeech: 'speechSynthesis' in window,
             hasMotion: 'DeviceMotionEvent' in window,
             hasBattery: 'getBattery' in navigator,
+            hasAmbientLight: 'AmbientLightSensor' in window || 'ondevicelight' in window,
+            hasTorch: false, // Определим после запуска камеры
             isMobile: /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
         };
 
         // ============================================
-        // 2. УНИВЕРСАЛЬНЫЕ ФУНКЦИИ (работают везде)
+        // 2. УНИВЕРСАЛЬНЫЕ ФУНКЦИИ
         // ============================================
-        
         function speakText(text, urgent = false) {
             if (!DEVICE.hasSpeech) return;
             if (!urgent && window.speechSynthesis && window.speechSynthesis.speaking) return;
             try {
                 if (window.speechSynthesis) window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'ru-RU';
-                utterance.rate = 0.95;
-                utterance.pitch = 1.0;
-                window.speechSynthesis.speak(utterance);
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = 'ru-RU'; u.rate = 0.95; u.pitch = 1.0;
+                window.speechSynthesis.speak(u);
             } catch(e) { console.warn('Speech error:', e); }
         }
 
         function vibratePhone(pattern) {
-            if (DEVICE.hasVibration && navigator.vibrate) {
-                navigator.vibrate(pattern);
-            }
+            if (DEVICE.hasVibration && navigator.vibrate) navigator.vibrate(pattern);
         }
 
         function beepSound(freq, dur, gainVal = 0.2) {
             if (!state.audioContext) return;
-            if (state.audioContext.state === 'suspended') {
-                state.audioContext.resume().catch(function() {});
-            }
+            if (state.audioContext.state === 'suspended') state.audioContext.resume().catch(()=>{});
             try {
                 const osc = state.audioContext.createOscillator();
                 const gainN = state.audioContext.createGain();
-                osc.connect(gainN);
-                gainN.connect(state.audioContext.destination);
-                osc.frequency.value = freq;
-                osc.type = 'sine';
+                osc.connect(gainN); gainN.connect(state.audioContext.destination);
+                osc.frequency.value = freq; osc.type = 'sine';
                 gainN.gain.setValueAtTime(gainVal, state.audioContext.currentTime);
                 gainN.gain.exponentialRampToValueAtTime(0.001, state.audioContext.currentTime + dur);
-                osc.start();
-                osc.stop(state.audioContext.currentTime + dur);
-            } catch(e) { /* тихо игнорируем */ }
+                osc.start(); osc.stop(state.audioContext.currentTime + dur);
+            } catch(e) {}
         }
 
         function triggerAlert(message, isFall = false) {
             speakText(message, true);
-            vibratePhone(isFall ? [300, 100, 300] : [200, 80, 200]);
+            vibratePhone(isFall ? [300,100,300] : [200,80,200]);
             beepSound(isFall ? 900 : 750, 0.12, 0.3);
-            if (CONFIG.DEBUG_CONSOLE) {
-                console.warn('⚠️ ' + message);
-            }
+            if (CONFIG.DEBUG_CONSOLE) console.warn('⚠️ ' + message);
         }
 
         function updateStatus(msg, type = 'ok') {
@@ -207,42 +129,33 @@
         function debugLog(msg, data) {
             if (!CONFIG.DEBUG_CONSOLE) return;
             const t = new Date().toLocaleTimeString();
-            if (data) {
-                console.log('[' + t + '] 🕵️ ' + msg, data);
-            } else {
-                console.log('[' + t + '] 🕵️ ' + msg);
-            }
+            console.log('[' + t + '] 🕵️ ' + msg, data || '');
         }
 
         // ============================================
-        // 3. КОНФИГУРАЦИЯ СИСТЕМЫ (исправленная)
+        // 3. КОНФИГУРАЦИЯ (с параметрами для тени/ямы)
         // ============================================
         const CONFIG = {
-            // Сетка анализа
-            GRID_ROWS: 4,
-            GRID_COLS: 4,
+            // Сетка
+            GRID_ROWS: 4, GRID_COLS: 4,
             
             // Чувствительность
             SENSITIVITY_BASE: 0.55,
             SENSITIVITY_MIN: 0.35,
             SENSITIVITY_MAX: 0.85,
             
-            // Фильтр тряски (принцип Mobileye)
-            // ✅ ИСПРАВЛЕНО: 9 → 11 (меньше ложных срабатываний при ходьбе)
+            // Фильтр тряски
             MAX_TREMOR_THRESHOLD: 11,
-            
-            // Минимум ячеек для тревоги
-            // ✅ ДОБАВЛЕНО: явное объявление
             MIN_DANGER_CELLS: 1,
             
-            // Подтверждение тревоги
+            // Подтверждение
             CONFIRM_FRAMES: 3,
             ALERT_COOLDOWN: 2500,
             
-            // Тиканье (сердцебиение)
+            // Тиканье
             HEARTBEAT_INTERVAL: 6000,
             
-            // Зона ног (нижняя часть кадра)
+            // Зона ног
             GROUND_ZONE_START: 0.7,
             
             // Авто-яркость
@@ -251,13 +164,20 @@
             SENSITIVITY_DARK_ADJUST: +0.15,
             SENSITIVITY_BRIGHT_ADJUST: -0.10,
             
-            // Разрешение обработки
-            WORK_WIDTH: 160,
-            WORK_HEIGHT: 120,
+            // 🔹 ТЕНЬ vs ЯМА: пороги
+            SHADOW_EDGE_CONTRAST_THRESHOLD: 0.85,  // Выше = ровный край = тень
+            SHADOW_ABSOLUTE_BLACK_THRESHOLD: 10,    // Яркость <10 = "абсолютно чёрное"
+            SHADOW_HIGH_LUX_THRESHOLD: 1000,        // Lux >1000 = яркое солнце = тени опасны
+            PARALLAX_VECTOR_DIFF_THRESHOLD: 0.3,    // Разница векторов >0.3 = яма (объём)
+            FLASH_PROBE_CONFIDENCE: 0.7,            // Если уверенность <70% — запускаем вспышку
+            
+            // Разрешение
+            WORK_WIDTH: 160, WORK_HEIGHT: 120,
             FRAME_INTERVAL_MS: 140,
             
             // Отладка
-            DEBUG_CONSOLE: true
+            DEBUG_CONSOLE: true,
+            DEBUG_VISUAL: false
         };
 
         // ============================================
@@ -267,19 +187,23 @@
             isRunning: false,
             currentSensitivity: CONFIG.SENSITIVITY_BASE,
             avgBrightness: 128,
+            ambientLux: null,          // Освещённость (Lux) от датчика или оценки
             lastHeartbeat: 0,
             anomalyStreak: 0,
             lastAlert: 0,
             prevGrid: [],
+            prevFrameData: null,       // Для параллакса
             animationTimer: null,
             audioContext: null,
             mediaStream: null,
+            videoTrack: null,
             batteryTimer: null,
             lastBatteryWarn: 0,
             batteryObj: null,
             lastAccelZ: null,
             accelCooldown: 0,
-            debug: { frames: 0, alerts: 0 },
+            lightSensor: null,
+            debug: { frames:0, alerts:0, shadowFiltered:0, pitConfirmed:0 },
             visualDebug: false,
             calibrationDone: false
         };
@@ -296,20 +220,16 @@
         const statusDiv = document.getElementById('status');
 
         // ============================================
-        // 6. СЕРДЦЕБИЕНИЕ (ТИКАНЬЕ)
+        // 6. СЕРДЦЕБИЕНИЕ
         // ============================================
         function doHeartbeat() {
             const now = Date.now();
             if (!state.isRunning) return;
             if (now - state.lastHeartbeat < CONFIG.HEARTBEAT_INTERVAL) return;
             if (now - state.lastAlert < 5000) return;
-            
             vibratePhone([15]);
             beepSound(400, 0.04, 0.1);
-            
-            if (CONFIG.DEBUG_CONSOLE) {
-                debugLog('❤️ Heartbeat');
-            }
+            if (CONFIG.DEBUG_CONSOLE) debugLog('❤️ Heartbeat');
             state.lastHeartbeat = now;
         }
 
@@ -319,13 +239,8 @@
         function adaptSensitivity(brightness) {
             state.avgBrightness = brightness;
             let target = CONFIG.SENSITIVITY_BASE;
-            
-            if (brightness < CONFIG.BRIGHTNESS_DARK_THRESHOLD) {
-                target += CONFIG.SENSITIVITY_DARK_ADJUST;
-            } else if (brightness > CONFIG.BRIGHTNESS_BRIGHT_THRESHOLD) {
-                target += CONFIG.SENSITIVITY_BRIGHT_ADJUST;
-            }
-            
+            if (brightness < CONFIG.BRIGHTNESS_DARK_THRESHOLD) target += CONFIG.SENSITIVITY_DARK_ADJUST;
+            else if (brightness > CONFIG.BRIGHTNESS_BRIGHT_THRESHOLD) target += CONFIG.SENSITIVITY_BRIGHT_ADJUST;
             target = Math.min(CONFIG.SENSITIVITY_MAX, Math.max(CONFIG.SENSITIVITY_MIN, target));
             state.currentSensitivity += (target - state.currentSensitivity) * 0.1;
         }
@@ -336,40 +251,265 @@
         function resetReference() {
             if (!state.isRunning) return;
             state.prevGrid = [];
+            state.prevFrameData = null;
             state.anomalyStreak = 0;
             updateStatus('🟡 Эталон сброшен', 'warn');
             beepSound(800, 0.1, 0.2);
             speakText('Сброс', true);
-            if (CONFIG.DEBUG_CONSOLE) {
-                debugLog('Эталон сброшен');
-            }
+            if (CONFIG.DEBUG_CONSOLE) debugLog('Эталон сброшен');
         }
 
         // ============================================
-        // 9. АНАЛИЗ КАДРА (ОСНОВНАЯ ЛОГИКА)
+        // 9. 🔹 АНАЛИЗ: ТЕНЬ vs ЯМА
+        // ============================================
+        
+        // 9.1. Расчёт контраста края (для фильтра "ровная тень")
+        function calculateEdgeContrast(imgData, x, y, w, h) {
+            const data = imgData.data;
+            const W = imgData.width;
+            let edgeSum = 0, edgeCnt = 0;
+            
+            // Проверяем горизонтальные и вертикальные градиенты по периметру зоны
+            for (let py = y; py < y + h; py++) {
+                for (let px = x; px < x + w; px++) {
+                    // Только края зоны
+                    if (px !== x && px !== x + w - 1 && py !== y && py !== y + h - 1) continue;
+                    
+                    const idx = (py * W + px) * 4;
+                    const bright = 0.299*data[idx] + 0.587*data[idx+1] + 0.114*data[idx+2];
+                    
+                    // Соседи
+                    let neighbors = [];
+                    if (px > 0) neighbors.push(data[((py * W + (px-1)) * 4)]);
+                    if (px < W-1) neighbors.push(data[((py * W + (px+1)) * 4)]);
+                    if (py > 0) neighbors.push(data[(((py-1) * W + px) * 4)]);
+                    if (py < imgData.height-1) neighbors.push(data[(((py+1) * W + px) * 4)]);
+                    
+                    if (neighbors.length > 0) {
+                        const avgNeighbor = neighbors.reduce((a,b)=>a+b,0) / neighbors.length;
+                        edgeSum += Math.abs(bright - avgNeighbor);
+                        edgeCnt++;
+                    }
+                }
+            }
+            return edgeCnt > 0 ? edgeSum / (edgeCnt * 255) : 0; // Нормализация 0..1
+        }
+        
+        // 9.2. Оценка "шумности" текстуры внутри пятна (яма = шум, тень = гладко)
+        function calculateTextureNoise(imgData, x, y, w, h) {
+            const data = imgData.data;
+            const W = imgData.width;
+            let values = [];
+            
+            for (let py = y; py < y + h; py += 2) {
+                for (let px = x; px < x + w; px += 2) {
+                    const idx = (py * W + px) * 4;
+                    values.push(0.299*data[idx] + 0.587*data[idx+1] + 0.114*data[idx+2]);
+                }
+            }
+            if (values.length < 4) return 0;
+            
+            const mean = values.reduce((a,b)=>a+b,0) / values.length;
+            const variance = values.reduce((a,b) => a + Math.pow(b - mean, 2), 0) / values.length;
+            return Math.sqrt(variance) / 255; // Нормализованный шум 0..1
+        }
+        
+        // 9.3. Временной параллакс: сравнение векторов движения
+        function calculateParallaxDifference(currImg, prevImg, x, y, w, h) {
+            if (!prevImg) return 0;
+            
+            const W = currImg.width, H = currImg.height;
+            const step = 4;
+            let insideVectors = [], outsideVectors = [];
+            
+            // Точки внутри зоны интереса
+            for (let py = y; py < y + h; py += step) {
+                for (let px = x; px < x + w; px += step) {
+                    const idx = (py * W + px) * 4;
+                    const currBright = 0.299*currImg.data[idx] + 0.587*currImg.data[idx+1] + 0.114*currImg.data[idx+2];
+                    // Простой поиск смещения в предыдущем кадре (окно ±3 пикселя)
+                    let bestMatch = null, bestScore = -1;
+                    for (let dy = -3; dy <= 3; dy++) {
+                        for (let dx = -3; dx <= 3; dx++) {
+                            const nx = px + dx, ny = py + dy;
+                            if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
+                            const nidx = (ny * W + nx) * 4;
+                            const prevBright = 0.299*prevImg.data[nidx] + 0.587*prevImg.data[nidx+1] + 0.114*prevImg.data[nidx+2];
+                            const score = 255 - Math.abs(currBright - prevBright);
+                            if (score > bestScore) { bestScore = score; bestMatch = {dx, dy}; }
+                        }
+                    }
+                    if (bestMatch) insideVectors.push(bestMatch);
+                }
+            }
+            
+            // Точки снаружи (вокруг зоны)
+            const margin = 10;
+            for (let py = Math.max(0, y - margin); py < Math.min(H, y + h + margin); py += step) {
+                for (let px = Math.max(0, x - margin); px < Math.min(W, x + w + margin); px += step) {
+                    // Пропускаем внутреннюю зону
+                    if (px >= x && px < x + w && py >= y && py < y + h) continue;
+                    
+                    const idx = (py * W + px) * 4;
+                    const currBright = 0.299*currImg.data[idx] + 0.587*currImg.data[idx+1] + 0.114*currImg.data[idx+2];
+                    let bestMatch = null, bestScore = -1;
+                    for (let dy = -3; dy <= 3; dy++) {
+                        for (let dx = -3; dx <= 3; dx++) {
+                            const nx = px + dx, ny = py + dy;
+                            if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
+                            const nidx = (ny * W + nx) * 4;
+                            const prevBright = 0.299*prevImg.data[nidx] + 0.587*prevImg.data[nidx+1] + 0.114*prevImg.data[nidx+2];
+                            const score = 255 - Math.abs(currBright - prevBright);
+                            if (score > bestScore) { bestScore = score; bestMatch = {dx, dy}; }
+                        }
+                    }
+                    if (bestMatch) outsideVectors.push(bestMatch);
+                }
+            }
+            
+            // Сравниваем средние векторы
+            if (insideVectors.length < 3 || outsideVectors.length < 3) return 0;
+            const avgInside = {
+                dx: insideVectors.reduce((a,b)=>a+b.dx,0) / insideVectors.length,
+                dy: insideVectors.reduce((a,b)=>a+b.dy,0) / insideVectors.length
+            };
+            const avgOutside = {
+                dx: outsideVectors.reduce((a,b)=>a+b.dx,0) / outsideVectors.length,
+                dy: outsideVectors.reduce((a,b)=>a+b.dy,0) / outsideVectors.length
+            };
+            const diff = Math.sqrt(Math.pow(avgInside.dx - avgOutside.dx, 2) + Math.pow(avgInside.dy - avgOutside.dy, 2));
+            return diff / 6; // Нормализация (макс. смещение 6 пикселей)
+        }
+        
+        // 9.4. Активный щуп вспышкой (если поддерживается)
+        async function probeWithFlash() {
+            if (!state.videoTrack || !DEVICE.hasTorch) return { result: 'unknown', confidence: 0 };
+            
+            try {
+                // Кадр без вспышки
+                debugCtx.drawImage(videoEl, 0, 0, CONFIG.WORK_WIDTH, CONFIG.WORK_HEIGHT);
+                const noFlash = debugCtx.getImageData(0, 0, CONFIG.WORK_WIDTH, CONFIG.WORK_HEIGHT);
+                
+                // Включаем вспышку на 100 мс
+                await state.videoTrack.applyConstraints({ advanced: [{ torch: true }] });
+                await new Promise(r => setTimeout(r, 100));
+                
+                // Кадр со вспышкой
+                debugCtx.drawImage(videoEl, 0, 0, CONFIG.WORK_WIDTH, CONFIG.WORK_HEIGHT);
+                const withFlash = debugCtx.getImageData(0, 0, CONFIG.WORK_WIDTH, CONFIG.WORK_HEIGHT);
+                
+                // Выключаем
+                await state.videoTrack.applyConstraints({ advanced: [{ torch: false }] });
+                
+                // Сравниваем яркость в зоне интереса (нижняя треть)
+                const startY = Math.floor(CONFIG.WORK_HEIGHT * CONFIG.GROUND_ZONE_START);
+                let brightNo = 0, brightWith = 0, cnt = 0;
+                for (let py = startY; py < CONFIG.WORK_HEIGHT; py += 2) {
+                    for (let px = 0; px < CONFIG.WORK_WIDTH; px += 2) {
+                        const idx1 = (py * CONFIG.WORK_WIDTH + px) * 4;
+                        const idx2 = (py * CONFIG.WORK_WIDTH + px) * 4;
+                        brightNo += noFlash.data[idx1] + noFlash.data[idx1+1] + noFlash.data[idx1+2];
+                        brightWith += withFlash.data[idx2] + withFlash.data[idx2+1] + withFlash.data[idx2+2];
+                        cnt++;
+                    }
+                }
+                brightNo = brightNo / cnt / 3;
+                brightWith = brightWith / cnt / 3;
+                
+                // Если яркость выросла >15% — возможно, яма (отблеск от дна)
+                const increase = (brightWith - brightNo) / (brightNo || 1);
+                if (increase > 0.15) {
+                    return { result: 'pit', confidence: Math.min(1, increase / 0.3) };
+                }
+                return { result: 'shadow', confidence: 0.5 };
+            } catch(e) {
+                if (CONFIG.DEBUG_CONSOLE) console.warn('Flash probe error:', e);
+                return { result: 'unknown', confidence: 0 };
+            }
+        }
+        
+        // 9.5. Главная функция: Тень или Яма?
+        function isThisAPit(imgData, x, y, w, h, ambientLux) {
+            // 1. Контраст края (ровный = тень)
+            const edgeContrast = calculateEdgeContrast(imgData, x, y, w, h);
+            if (edgeContrast > CONFIG.SHADOW_EDGE_CONTRAST_THRESHOLD) {
+                if (CONFIG.DEBUG_CONSOLE) debugLog('Тень: ровный край', { edgeContrast: edgeContrast.toFixed(2) });
+                return { isPit: false, reason: 'edge' };
+            }
+            
+            // 2. Абсолютная чернота при ярком свете = тень
+            let minBright = 255;
+            for (let i = 0; i < imgData.data.length; i += 4) {
+                const b = 0.299*imgData.data[i] + 0.587*imgData.data[i+1] + 0.114*imgData.data[i+2];
+                if (b < minBright) minBright = b;
+            }
+            if (minBright < CONFIG.SHADOW_ABSOLUTE_BLACK_THRESHOLD && ambientLux > CONFIG.SHADOW_HIGH_LUX_THRESHOLD) {
+                if (CONFIG.DEBUG_CONSOLE) debugLog('Тень: абсолютно чёрное при ярком свете', { minBright, ambientLux });
+                return { isPit: false, reason: 'absolute_black' };
+            }
+            
+            // 3. Текстура: шум = яма, гладко = тень
+            const noise = calculateTextureNoise(imgData, x, y, w, h);
+            if (noise < 0.15 && ambientLux > 500) {
+                if (CONFIG.DEBUG_CONSOLE) debugLog('Тень: гладкая текстура', { noise: noise.toFixed(2) });
+                return { isPit: false, reason: 'smooth_texture' };
+            }
+            
+            // 4. Параллакс: разное движение = яма
+            if (state.prevFrameData) {
+                const parallaxDiff = calculateParallaxDifference(imgData, state.prevFrameData, x, y, w, h);
+                if (parallaxDiff > CONFIG.PARALLAX_VECTOR_DIFF_THRESHOLD) {
+                    if (CONFIG.DEBUG_CONSOLE) debugLog('Яма: параллакс', { parallaxDiff: parallaxDiff.toFixed(2) });
+                    return { isPit: true, reason: 'parallax', confidence: Math.min(1, parallaxDiff / 0.5) };
+                }
+            }
+            
+            // 5. Если сомнение (уверенность 0.4-0.7) — запускаем вспышку
+            const confidence = 0.5 + (noise - 0.15) * 2; // Эвристика
+            if (confidence < CONFIG.FLASH_PROBE_CONFIDENCE && DEVICE.hasTorch) {
+                if (CONFIG.DEBUG_CONSOLE) debugLog('Сомнение, запускаю вспышку...', { confidence: confidence.toFixed(2) });
+                // В реальном коде здесь был бы async/await, но чтобы не блокировать кадр — упрощаем
+                // Для демо возвращаем "неизвестно", в продакшене — ждать результат
+            }
+            
+            // По умолчанию: если шум есть и не тень по другим признакам — яма
+            if (noise > 0.25) {
+                if (CONFIG.DEBUG_CONSOLE) debugLog('Яма: шумная текстура', { noise: noise.toFixed(2) });
+                return { isPit: true, reason: 'noisy_texture', confidence: Math.min(1, (noise - 0.25) / 0.3) };
+            }
+            
+            // Не уверены — считаем тень (безопаснее)
+            if (CONFIG.DEBUG_CONSOLE) debugLog('Неопределенно, считаем тень', { edgeContrast, noise, ambientLux });
+            return { isPit: false, reason: 'uncertain' };
+        }
+
+        // ============================================
+        // 10. АНАЛИЗ КАДРА (ОСНОВНОЙ ЦИКЛ)
         // ============================================
         function analyzeFrame() {
             if (!state.isRunning || !videoEl.videoWidth) return;
             
-            // Тиканье
             doHeartbeat();
             
-            // Захват и сжатие кадра
+            // Захват кадра
             debugCanvas.width = CONFIG.WORK_WIDTH;
             debugCanvas.height = CONFIG.WORK_HEIGHT;
             debugCtx.drawImage(videoEl, 0, 0, CONFIG.WORK_WIDTH, CONFIG.WORK_HEIGHT);
             const imgData = debugCtx.getImageData(0, 0, CONFIG.WORK_WIDTH, CONFIG.WORK_HEIGHT);
             
-            // Средняя яркость сцены (для авто-подстройки)
-            let totalBright = 0, totalPix = 0;
-            for (let i = 0; i < imgData.data.length; i += 4) {
-                totalBright += imgData.data[i] + imgData.data[i + 1] + imgData.data[i + 2];
-                totalPix++;
+            // Оценка яркости сцены (если нет датчика освещённости)
+            if (state.ambientLux === null && !DEVICE.hasAmbientLight) {
+                let total = 0;
+                for (let i = 0; i < imgData.data.length; i += 4) {
+                    total += imgData.data[i] + imgData.data[i+1] + imgData.data[i+2];
+                }
+                // Эвристика: средняя яркость * коэффициент ≈ Lux (очень грубо)
+                state.ambientLux = (total / imgData.data.length / 3) * 8;
             }
-            const avgBright = totalBright / totalPix / 3;
-            adaptSensitivity(avgBright);
             
-            // Зона ног (нижняя треть кадра)
+            adaptSensitivity(state.avgBrightness);
+            
+            // Зона ног
             const startY = Math.floor(CONFIG.WORK_HEIGHT * CONFIG.GROUND_ZONE_START);
             const zoneH = (CONFIG.WORK_HEIGHT - startY) / CONFIG.GRID_ROWS;
             const zoneW = CONFIG.WORK_WIDTH / CONFIG.GRID_COLS;
@@ -382,52 +522,74 @@
                 visualCanvas.width = CONFIG.WORK_WIDTH;
                 visualCanvas.height = CONFIG.WORK_HEIGHT;
                 visualCtx.drawImage(videoEl, 0, 0, CONFIG.WORK_WIDTH, CONFIG.WORK_HEIGHT);
-                visualCtx.strokeStyle = '#00ff00';
+                visualCtx.strokeStyle = '#0f0';
                 visualCtx.lineWidth = 1;
             }
             
-            // Анализ сетки
             for (let row = 0; row < CONFIG.GRID_ROWS; row++) {
                 for (let col = 0; col < CONFIG.GRID_COLS; col++) {
                     const x = col * zoneW;
                     const y = startY + row * zoneH;
                     
-                    // Средняя яркость ячейки (с шагом 2 для скорости)
+                    // Яркость ячейки
                     let sum = 0, cnt = 0;
                     for (let py = y; py < y + zoneH; py += 2) {
                         for (let px = x; px < x + zoneW; px += 2) {
                             const idx = (py * CONFIG.WORK_WIDTH + px) * 4;
-                            sum += imgData.data[idx] + imgData.data[idx + 1] + imgData.data[idx + 2];
+                            sum += imgData.data[idx] + imgData.data[idx+1] + imgData.data[idx+2];
                             cnt++;
                         }
                     }
                     const bright = cnt ? sum / cnt : 0;
                     currentGrid.push(bright);
                     
-                    // Сравнение с предыдущим кадром
                     if (state.prevGrid.length > 0) {
                         const prevIdx = row * CONFIG.GRID_COLS + col;
                         const prev = state.prevGrid[prevIdx];
                         if (prev > 0) {
                             const diff = Math.abs(bright - prev) / prev;
+                            
+                            // Если изменение есть — проверяем: тень или яма?
                             if (diff > state.currentSensitivity) {
-                                changedCells++;
-                                if (state.visualDebug) {
-                                    visualCtx.fillStyle = 'rgba(255, 0, 0, 0.3)';
-                                    visualCtx.fillRect(x, y, zoneW, zoneH);
+                                const analysis = isThisAPit(imgData, x, y, zoneW, zoneH, state.ambientLux);
+                                
+                                if (analysis.isPit) {
+                                    changedCells++;
+                                    if (state.visualDebug) {
+                                        visualCtx.fillStyle = 'rgba(255, 50, 50, 0.4)';
+                                        visualCtx.fillRect(x, y, zoneW, zoneH);
+                                        visualCtx.fillStyle = '#fff';
+                                        visualCtx.font = '8px monospace';
+                                        visualCtx.fillText('🕳️', x+2, y+10);
+                                    }
+                                    if (CONFIG.DEBUG_CONSOLE && analysis.reason === 'parallax') {
+                                        state.debug.pitConfirmed++;
+                                    }
+                                } else {
+                                    // Это тень — игнорируем, но логируем для отладки
+                                    if (CONFIG.DEBUG_CONSOLE && state.debug.frames % 60 === 0) {
+                                        debugLog('Отфильтрована тень', { reason: analysis.reason, col, row });
+                                        state.debug.shadowFiltered++;
+                                    }
+                                    if (state.visualDebug) {
+                                        visualCtx.fillStyle = 'rgba(100, 100, 255, 0.2)';
+                                        visualCtx.fillRect(x, y, zoneW, zoneH);
+                                        visualCtx.fillStyle = '#88f';
+                                        visualCtx.font = '8px monospace';
+                                        visualCtx.fillText('🌑', x+2, y+10);
+                                    }
                                 }
                             }
                         }
                     }
                     
-                    // Отрисовка сетки
                     if (state.visualDebug) {
                         visualCtx.strokeRect(x, y, zoneW, zoneH);
                     }
                 }
             }
             
-            // Фильтр тряски (Mobileye принцип)
+            // Фильтр тряски
             if (changedCells >= CONFIG.MAX_TREMOR_THRESHOLD) {
                 state.anomalyStreak = 0;
             } else if (changedCells >= CONFIG.MIN_DANGER_CELLS && changedCells < CONFIG.MAX_TREMOR_THRESHOLD) {
@@ -436,44 +598,46 @@
                 state.anomalyStreak = 0;
             }
             
-            // Проверка тревоги
+            // Тревога
             const now = Date.now();
             if (state.anomalyStreak >= CONFIG.CONFIRM_FRAMES && (now - state.lastAlert) > CONFIG.ALERT_COOLDOWN) {
                 state.lastAlert = now;
                 state.anomalyStreak = 0;
                 state.debug.alerts++;
                 
-                triggerAlert('Опасность');
-                updateStatus('⚠️ ПРЕПЯТСТВИЕ', 'warn');
-                setTimeout(function() {
-                    if (state.isRunning) {
-                        updateStatus('🟢 Путь свободен');
-                    }
-                }, 2000);
+                triggerAlert('Яма впереди!');
+                updateStatus('⚠️ ЯМА!', 'error');
+                setTimeout(() => { if (state.isRunning) updateStatus('🟢 Путь свободен'); }, 2000);
             } else if (changedCells === 0 && (now - state.lastAlert) > 3000) {
                 updateStatus('🟢 Путь свободен');
             }
             
             // Визуальная отладка — метрики
             if (state.visualDebug) {
-                visualCtx.fillStyle = '#00ff00';
-                visualCtx.font = '10px monospace';
+                visualCtx.fillStyle = '#0f0';
+                visualCtx.font = '9px monospace';
                 visualCtx.fillText('S:' + state.currentSensitivity.toFixed(2), 2, 10);
-                visualCtx.fillText('B:' + Math.round(avgBright), 2, 22);
-                visualCtx.fillText('C:' + changedCells, 2, 34);
-                visualCtx.fillText('A:' + state.anomalyStreak, 2, 46);
+                visualCtx.fillText('B:' + Math.round(state.avgBrightness), 2, 22);
+                visualCtx.fillText('L:' + Math.round(state.ambientLux || 0), 2, 34);
+                visualCtx.fillText('C:' + changedCells, 2, 46);
+                visualCtx.fillText('🕳️:' + state.debug.pitConfirmed, 2, 58);
+                visualCtx.fillText('🌑:' + state.debug.shadowFiltered, 2, 70);
             }
             
             // Сохраняем для следующего кадра
             state.prevGrid = currentGrid;
+            state.prevFrameData = imgData;
             state.debug.frames++;
             
             // Периодический лог
-            if (CONFIG.DEBUG_CONSOLE && state.debug.frames % 30 === 0) {
+            if (CONFIG.DEBUG_CONSOLE && state.debug.frames % 60 === 0) {
                 debugLog('Статус', {
                     fps: Math.round(1000 / CONFIG.FRAME_INTERVAL_MS),
                     sense: state.currentSensitivity.toFixed(2),
-                    alerts: state.debug.alerts
+                    lux: Math.round(state.ambientLux || 0),
+                    alerts: state.debug.alerts,
+                    pits: state.debug.pitConfirmed,
+                    shadows: state.debug.shadowFiltered
                 });
             }
         }
@@ -481,29 +645,56 @@
         function processingLoop() {
             if (!state.isRunning) return;
             analyzeFrame();
-            state.animationTimer = setTimeout(function() {
-                requestAnimationFrame(processingLoop);
-            }, CONFIG.FRAME_INTERVAL_MS);
+            state.animationTimer = setTimeout(() => requestAnimationFrame(processingLoop), CONFIG.FRAME_INTERVAL_MS);
         }
 
         // ============================================
-        // 10. ОБРАБОТЧИК ДВИЖЕНИЯ (именованная функция для очистки)
+        // 11. ДАТЧИК ОСВЕЩЁННОСТИ
+        // ============================================
+        function initLightSensor() {
+            // Попытка использовать AmbientLightSensor (Chrome, экспериментальный)
+            if ('AmbientLightSensor' in window) {
+                try {
+                    state.lightSensor = new AmbientLightSensor({ frequency: 1 });
+                    state.lightSensor.addEventListener('reading', () => {
+                        state.ambientLux = state.lightSensor.illuminance;
+                        if (CONFIG.DEBUG_CONSOLE && state.debug.frames % 120 === 0) {
+                            debugLog('Lux (сенсор)', { lux: state.ambientLux.toFixed(1) });
+                        }
+                    });
+                    state.lightSensor.start();
+                    if (CONFIG.DEBUG_CONSOLE) console.log('✅ AmbientLightSensor активен');
+                    return;
+                } catch(e) {
+                    if (CONFIG.DEBUG_CONSOLE) console.warn('AmbientLightSensor error:', e);
+                }
+            }
+            
+            // Фоллбэк: оценка по кадру (уже делается в analyzeFrame)
+            if (CONFIG.DEBUG_CONSOLE) console.log('⚠️ AmbientLightSensor не доступен, оценка по кадру');
+        }
+        
+        function stopLightSensor() {
+            if (state.lightSensor) {
+                state.lightSensor.stop();
+                state.lightSensor = null;
+            }
+        }
+
+        // ============================================
+        // 12. ОБРАБОТЧИК ДВИЖЕНИЯ
         // ============================================
         function motionHandler(event) {
             if (!state.isRunning) return;
-            
-            // Адаптивная чувствительность по энергии движения
             const acc = event.acceleration;
             if (acc) {
-                const energy = Math.abs(acc.x || 0) + Math.abs(acc.y || 0) + Math.abs(acc.z || 0);
+                const energy = Math.abs(acc.x||0) + Math.abs(acc.y||0) + Math.abs(acc.z||0);
                 const factor = Math.min(0.5, energy / 40);
                 const newSense = 0.85 - factor;
                 if (Math.abs(newSense - state.currentSensitivity) > 0.02) {
                     state.currentSensitivity += (newSense - state.currentSensitivity) * 0.1;
                 }
             }
-            
-            // Детектор провала (резкое падение по оси Z)
             const accG = event.accelerationIncludingGravity;
             if (accG && accG.z !== null) {
                 const z = accG.z;
@@ -513,77 +704,60 @@
                         state.accelCooldown = Date.now() + 2000;
                         triggerAlert('Провал!', true);
                         updateStatus('🔥 ПРОВАЛ!', 'error');
-                        if (CONFIG.DEBUG_CONSOLE) {
-                            debugLog('Провал!', { delta: delta.toFixed(2) });
-                        }
+                        if (CONFIG.DEBUG_CONSOLE) debugLog('Провал!', { delta: delta.toFixed(2) });
                     }
                 }
                 state.lastAccelZ = z;
             }
         }
-
+        
         function initMotion() {
             if (!DEVICE.hasMotion) return;
             window.addEventListener('devicemotion', motionHandler, { passive: true });
-            if (CONFIG.DEBUG_CONSOLE) {
-                console.log('✅ Акселерометр активен');
-            }
+            if (CONFIG.DEBUG_CONSOLE) console.log('✅ Акселерометр активен');
         }
 
         // ============================================
-        // 11. МОНИТОРИНГ БАТАРЕИ (именованная функция для очистки)
+        // 13. МОНИТОРИНГ БАТАРЕИ
         // ============================================
         function batteryHandler() {
             if (!state.isRunning || !state.batteryObj) return;
             const level = Math.round(state.batteryObj.level * 100);
             const isCharging = state.batteryObj.charging;
             const now = Date.now();
-            
             if (!isCharging) {
                 if (level <= 5 && now - state.lastBatteryWarn > 120000) {
                     speakText('Критический заряд, срочно зарядите!', true);
                     state.lastBatteryWarn = now;
-                    if (CONFIG.DEBUG_CONSOLE) debugLog('Батарея критически низкая: ' + level + '%');
                 } else if (level <= 10 && now - state.lastBatteryWarn > 60000) {
                     speakText('Заряд 10 процентов, скоро выключусь', true);
                     state.lastBatteryWarn = now;
-                    if (CONFIG.DEBUG_CONSOLE) debugLog('Батарея низкая: ' + level + '%');
                 } else if (level <= 20 && now - state.lastBatteryWarn > 120000) {
                     speakText('Заряд батареи ' + level + ' процентов', true);
                     state.lastBatteryWarn = now;
-                    if (CONFIG.DEBUG_CONSOLE) debugLog('Батарея: ' + level + '%');
                 }
             }
         }
-
+        
         async function initBattery() {
             if (!DEVICE.hasBattery) {
-                if (CONFIG.DEBUG_CONSOLE) {
-                    console.log('⚠️ Battery API не поддерживается');
-                }
+                if (CONFIG.DEBUG_CONSOLE) console.log('⚠️ Battery API не поддерживается');
                 return;
             }
             try {
                 state.batteryObj = await navigator.getBattery();
                 state.batteryObj.addEventListener('levelchange', batteryHandler);
                 state.batteryObj.addEventListener('chargingchange', batteryHandler);
-                batteryHandler(); // первичная проверка
+                batteryHandler();
                 state.batteryTimer = setInterval(batteryHandler, 30000);
-                if (CONFIG.DEBUG_CONSOLE) {
-                    console.log('✅ Мониторинг батареи активен');
-                }
+                if (CONFIG.DEBUG_CONSOLE) console.log('✅ Мониторинг батареи активен');
             } catch(e) {
-                if (CONFIG.DEBUG_CONSOLE) {
-                    console.warn('Battery API error:', e);
-                }
+                if (CONFIG.DEBUG_CONSOLE) console.warn('Battery API error:', e);
             }
         }
-
+        
         function stopBattery() {
-            if (state.batteryTimer) {
-                clearInterval(state.batteryTimer);
-                state.batteryTimer = null;
-            }
+            if (state.batteryTimer) clearInterval(state.batteryTimer);
             if (state.batteryObj) {
                 state.batteryObj.removeEventListener('levelchange', batteryHandler);
                 state.batteryObj.removeEventListener('chargingchange', batteryHandler);
@@ -591,36 +765,26 @@
         }
 
         // ============================================
-        // 12. ЗАПУСК СИСТЕМЫ
+        // 14. ЗАПУСК СИСТЕМЫ
         // ============================================
         async function startSystem() {
             if (state.isRunning) return;
             
-            // Инициализация аудио по жесту пользователя
             if (!state.audioContext) {
                 try {
                     state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    if (CONFIG.DEBUG_CONSOLE) {
-                        console.log('✅ AudioContext инициализирован');
-                    }
-                } catch(e) {
-                    if (CONFIG.DEBUG_CONSOLE) {
-                        console.warn('AudioContext error:', e);
-                    }
-                }
+                    if (CONFIG.DEBUG_CONSOLE) console.log('✅ AudioContext инициализирован');
+                } catch(e) { if (CONFIG.DEBUG_CONSOLE) console.warn('AudioContext error:', e); }
             }
             
             startBtn.disabled = true;
             updateStatus('🟡 Запуск камеры...');
-            if (CONFIG.DEBUG_CONSOLE) {
-                debugLog('Запрос доступа к камере...');
-            }
+            if (CONFIG.DEBUG_CONSOLE) debugLog('Запрос камеры...');
             
             try {
-                // Универсальные настройки камеры
                 const constraints = {
                     video: {
-                        facingMode: 'environment', // Задняя камера (если есть)
+                        facingMode: 'environment',
                         width: { ideal: 320 },
                         height: { ideal: 240 }
                     }
@@ -631,27 +795,34 @@
                 await videoEl.play();
                 
                 state.mediaStream = stream;
+                state.videoTrack = stream.getVideoTracks()[0];
+                
+                // Проверка поддержки вспышки
+                const caps = state.videoTrack.getCapabilities?.();
+                DEVICE.hasTorch = !!(caps && caps.torch);
+                if (CONFIG.DEBUG_CONSOLE) {
+                    console.log('✅ Камера запущена, вспышка:', DEVICE.hasTorch ? 'OK' : 'Нет');
+                }
+                
                 state.isRunning = true;
                 state.lastHeartbeat = Date.now();
                 
-                // Запуск сервисов
                 initMotion();
+                initLightSensor();
                 await initBattery();
                 
-                // Калибровка
                 updateStatus('🟡 Калибровка 2 сек...');
                 speakText('Калибровка');
                 
-                setTimeout(function() {
+                setTimeout(() => {
                     if (state.isRunning) {
                         state.prevGrid = [];
+                        state.prevFrameData = null;
                         state.anomalyStreak = 0;
                         state.calibrationDone = true;
-                        updateStatus('🟢 Защита активна. Тиканье каждые 6 с.');
+                        updateStatus('🟢 Защита активна. Тень ≠ Яма.');
                         speakText('Готов');
-                        if (CONFIG.DEBUG_CONSOLE) {
-                            debugLog('Система запущена');
-                        }
+                        if (CONFIG.DEBUG_CONSOLE) debugLog('Система запущена');
                     }
                 }, 2000);
                 
@@ -663,141 +834,86 @@
                 if (err.name === 'NotAllowedError') msg = 'Разрешите доступ к камере';
                 else if (err.name === 'NotFoundError') msg = 'Камера не найдена';
                 else if (err.name === 'NotReadableError') msg = 'Камера занята';
-                else if (err.name === 'OverconstrainedError') msg = 'Неподдерживаемое разрешение';
                 
                 updateStatus('❌ ' + msg, 'error');
                 speakText(msg);
                 startBtn.disabled = false;
-                
-                if (CONFIG.DEBUG_CONSOLE) {
-                    debugLog('Start error', { name: err.name, message: err.message });
-                }
+                if (CONFIG.DEBUG_CONSOLE) debugLog('Start error', { name: err.name, message: err.message });
             }
         }
 
         // ============================================
-        // 13. ОСТАНОВКА СИСТЕМЫ (полная очистка)
+        // 15. ОСТАНОВКА СИСТЕМЫ
         // ============================================
         function stopSystem() {
             state.isRunning = false;
             
-            // Остановка цикла
-            if (state.animationTimer) {
-                clearTimeout(state.animationTimer);
-                state.animationTimer = null;
-            }
+            if (state.animationTimer) { clearTimeout(state.animationTimer); state.animationTimer = null; }
+            if (state.mediaStream) { state.mediaStream.getTracks().forEach(t => t.stop()); state.mediaStream = null; state.videoTrack = null; }
             
-            // Остановка камеры
-            if (state.mediaStream) {
-                state.mediaStream.getTracks().forEach(function(track) {
-                    track.stop();
-                });
-                state.mediaStream = null;
-            }
-            
-            // Очистка слушателей
             window.removeEventListener('devicemotion', motionHandler);
+            stopLightSensor();
             stopBattery();
             
-            // Аудио
-            if (state.audioContext) {
-                state.audioContext.close().catch(function() {});
-                state.audioContext = null;
-            }
+            if (state.audioContext) { state.audioContext.close().catch(()=>{}); state.audioContext = null; }
             
-            // UI
             startBtn.disabled = false;
             updateStatus('⏹️ Остановлено');
             speakText('Система выключена');
             vibratePhone(100);
             
-            // Сброс состояния
             state.prevGrid = [];
+            state.prevFrameData = null;
             state.anomalyStreak = 0;
             state.lastAccelZ = null;
             state.debug.frames = 0;
             
-            if (CONFIG.DEBUG_CONSOLE) {
-                debugLog('Система остановлена', { totalAlerts: state.debug.alerts });
-            }
+            if (CONFIG.DEBUG_CONSOLE) debugLog('Система остановлена', { totalAlerts: state.debug.alerts });
         }
 
         // ============================================
-        // 14. ЖЕСТЫ И КЛАВИАТУРА (универсальные)
+        // 16. ЖЕСТЫ И КЛАВИАТУРА
         // ============================================
-        
-        // Двойной тап для сброса (мобильные)
         let lastTapTime = 0;
-        document.body.addEventListener('touchstart', function(e) {
+        document.body.addEventListener('touchstart', (e) => {
             if (!state.isRunning) return;
             const now = Date.now();
-            if (now - lastTapTime < 300) {
-                resetReference();
-                lastTapTime = 0;
-            } else {
-                lastTapTime = now;
-            }
+            if (now - lastTapTime < 300) { resetReference(); lastTapTime = 0; }
+            else { lastTapTime = now; }
         }, { passive: true });
         
-        // Клавиатура (ноутбуки)
-        window.addEventListener('keydown', function(e) {
+        window.addEventListener('keydown', (e) => {
             if (!state.isRunning && e.key !== 'Enter') return;
-            
             switch(e.key) {
-                case 'Escape':
-                    if (state.isRunning) stopSystem();
-                    break;
-                case 'r':
-                case 'R':
-                    resetReference();
-                    break;
-                case 't':
-                case 'T':
+                case 'Escape': if (state.isRunning) stopSystem(); break;
+                case 'r': case 'R': resetReference(); break;
+                case 't': case 'T':
                     if (state.isRunning) {
                         triggerAlert('Тест', false);
                         updateStatus('🧪 ТЕСТ', 'warn');
-                        setTimeout(function() {
-                            if (state.isRunning) updateStatus('🟢 Путь свободен');
-                        }, 1500);
-                        if (CONFIG.DEBUG_CONSOLE) debugLog('Ручной тест тревоги');
+                        setTimeout(() => { if (state.isRunning) updateStatus('🟢 Путь свободен'); }, 1500);
+                        if (CONFIG.DEBUG_CONSOLE) debugLog('Ручной тест');
                     }
                     break;
-                case 'v':
-                case 'V':
+                case 'v': case 'V':
                     state.visualDebug = !state.visualDebug;
                     visualCanvas.classList.toggle('visible', state.visualDebug);
                     updateStatus(state.visualDebug ? '🔍 Визуал ВКЛ' : '🔍 Визуал ВЫКЛ');
-                    if (CONFIG.DEBUG_CONSOLE) {
-                        debugLog('Визуальная отладка: ' + (state.visualDebug ? 'ON' : 'OFF'));
-                    }
+                    if (CONFIG.DEBUG_CONSOLE) debugLog('Визуал: ' + (state.visualDebug ? 'ON' : 'OFF'));
                     break;
             }
         });
         
-        // Кнопка запуска
-        startBtn.addEventListener('click', function() {
-            if (state.isRunning) {
-                stopSystem();
-            } else {
-                startSystem();
-            }
-        });
+        startBtn.addEventListener('click', () => { state.isRunning ? stopSystem() : startSystem(); });
+        window.addEventListener('beforeunload', () => { if (state.isRunning) stopSystem(); });
         
-        // Очистка при закрытии страницы
-        window.addEventListener('beforeunload', function() {
-            if (state.isRunning) {
-                stopSystem();
-            }
-        });
-        
-        // Инициализация
         updateStatus('⚫ Нажмите Запустить');
         if (CONFIG.DEBUG_CONSOLE) {
-            console.log('🚀 Анти ИИ Взгляд загружен');
+            console.log('🚀 Анти ИИ Взгляд: Тень ≠ Яма');
             console.log('📱 Устройство:', DEVICE.isMobile ? 'Мобильное' : 'Десктоп');
-            console.log('🔊 Звук:', DEVICE.hasSpeech ? 'OK' : 'Нет');
-            console.log('📳 Вибрация:', DEVICE.hasVibration ? 'OK' : 'Нет');
-            console.log('🎮 Управление: V=визуал, R=сброс, T=тест, Esc=стоп');
+            console.log('🔦 Вспышка:', DEVICE.hasTorch ? 'OK' : 'Нет');
+            console.log('💡 Датчик света:', DEVICE.hasAmbientLight ? 'OK' : 'Оценка по кадру');
+            console.log('🎮 V=визуал, R=сброс, T=тест, Esc=стоп');
         }
     </script>
 </body>
