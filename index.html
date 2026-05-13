@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -18,14 +19,53 @@
             border-radius:20px; border:1px solid #222; background:#000;
         }
         button {
-            background:#00d4aa; color:#000; border:none; padding:15px 30px;
-            font-size:1.2rem; font-weight:700; border-radius:48px; margin:20px 0;
-            min-width:260px; max-width:400px; width:90vw;
-            box-shadow:0 4px 16px rgba(0,212,170,0.3); cursor:pointer;
-            transition:transform 0.1s ease;
+            background:#00d4aa; color:#000; border:none;
+            width: 50vw;
+            max-width: 420px;
+            min-width: 220px;
+            padding: 20px 16px;
+            font-size: 1.7rem;
+            font-weight: 700;
+            border-radius: 64px;
+            box-shadow:0 6px 20px rgba(0,212,170,0.4);
+            cursor:pointer;
+            transition:transform 0.1s ease, background 0.2s;
+            margin: 72px auto 24px auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            line-height: 1.2;
+            height: 50vh;
+            min-height: 200px;
         }
-        button:active { transform:scale(0.98); }
-        button:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+        button:active { transform:scale(0.97); background:#00c09a; }
+        button:disabled { opacity:0.6; cursor:not-allowed; transform:none; background:#00d4aa; }
+        
+        .btn-logo {
+            width: 1.8em;
+            height: 1.8em;
+            object-fit: contain;
+            display: inline-block;
+            vertical-align: middle;
+            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2));
+        }
+        
+        #status {
+            color: transparent !important;
+            text-indent: -9999px !important;
+            overflow: hidden !important;
+            white-space: nowrap !important;
+            min-height: 0 !important;
+            height: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            background: transparent !important;
+            display: block !important;
+        }
+        
         .status {
             margin:20px 0; font-size:1.1rem; padding:10px 16px;
             background:#111; border-radius:24px; border:1px solid #222;
@@ -35,25 +75,46 @@
         .status.warn { color:#ffaa00; }
         .status.error { color:#ff6666; }
         .status.water { color:#66ccff; }
-        .hint { color:#55aa55; font-size:0.85rem; margin-top:8px; line-height:1.4; max-width:400px; }
         .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
         #debugCanvas { display:none; }
+        
+        @media (max-width: 560px) {
+            button {
+                width: 70vw;
+                font-size: 1.5rem;
+                padding: 18px 12px;
+                margin-top: 60px;
+                height: 50vh;
+                min-height: 180px;
+            }
+            .btn-logo {
+                width: 1.5em;
+                height: 1.5em;
+            }
+        }
+        @media (min-width: 800px) {
+            button {
+                width: 40vw;
+                max-width: 480px;
+                height: 50vh;
+                min-height: 220px;
+            }
+        }
     </style>
 </head>
 <body>
     <video id="video" autoplay playsinline muted></video>
     <canvas id="debugCanvas"></canvas>
     
-    <div><button id="startBtn">🛡️ ВКЛЮЧИТЬ ЗАЩИТУ</button></div>
+    <div>
+        <button id="startBtn">
+            <img class="btn-logo" src="favicon.ico" alt="логотип защиты" onerror="this.style.display='none'">
+            <span>ВКЛЮЧИТЬ ЗАЩИТУ</span>
+        </button>
+    </div>
     
     <div id="status" class="status" role="status" aria-live="assertive" aria-atomic="true">
         ⚫ Нажмите для включения защиты
-    </div>
-    
-    <div class="hint" aria-hidden="true">
-        🔊 Голос + 💓 Вибрация = предупреждение.<br>
-        💧 Лужа | 🕳️ Яма | 🌳 Препятствие | 🔥 Провал.<br>
-        💓 Тихое тиканье каждые 5 сек = система работает.
     </div>
     
     <span class="sr-only">
@@ -165,64 +226,43 @@
         // 4. КОНФИГУРАЦИЯ: БЕЗОПАСНОСТЬ > ЭКОНОМИЯ > УМ
         // ============================================================
         const CONFIG = {
-            // === ЗОНЫ АНАЛИЗА ===
-            ZONE_HEAD_START: 0.0,    // Верхние 20% = уровень головы (ветки)
+            ZONE_HEAD_START: 0.0,
             ZONE_HEAD_END: 0.2,
-            ZONE_CHEST_START: 0.2,   // Следующие 30% = грудь/руки
+            ZONE_CHEST_START: 0.2,
             ZONE_CHEST_END: 0.5,
-            ZONE_GROUND_START: 0.7,  // Нижние 30% = ноги/земля
+            ZONE_GROUND_START: 0.7,
             ZONE_GROUND_END: 1.0,
-            
-            // === СЕТКА ===
             GRID_COLS: 4,
-            GRID_ROWS_PER_ZONE: 2,   // 2 строки на зону = 6 зон всего
-            
-            // === ЧУВСТВИТЕЛЬНОСТЬ (консервативная) ===
-            SENSITIVITY_OBSTACLE: 0.45,   // Препятствия
-            SENSITIVITY_DROP: 0.35,        // Ямы — более чувствительно
-            SENSITIVITY_WATER: 0.40,       // Лужи
+            GRID_ROWS_PER_ZONE: 2,
+            SENSITIVITY_OBSTACLE: 0.45,
+            SENSITIVITY_DROP: 0.35,
+            SENSITIVITY_WATER: 0.40,
             SENSITIVITY_MIN: 0.30,
             SENSITIVITY_MAX: 0.75,
-            
-            // === ФИЛЬТРЫ ЛОЖНЫХ СРАБАТЫВАНИЙ ===
-            GLOBAL_MOTION_THRESHOLD: 0.55,  // Если >55% ячеек изменились = игнор (шаг/поворот)
-            CONFIRM_FRAMES_OBSTACLE: 2,     // Подтверждение для препятствий
-            CONFIRM_FRAMES_DROP: 1,          // Для ям — быстрее реакция
-            CONFIRM_FRAMES_WATER: 2,         // Для луж
-            ALERT_COOLDOWN: 2500,            // Пауза между тревогами
-            
-            // === ДЕТЕКЦИЯ ЛУЖ ===
-            WATER_SPECULAR_THRESHOLD: 0.85,   // Яркие блики = возможная вода
-            WATER_COLOR_BLUE_THRESHOLD: 1.15, // Отношение синего к красному >1.15 = вода
-            WATER_TEXTURE_SMOOTH: 0.20,       // Гладкая текстура = вода
-            WATER_MIN_BRIGHTNESS: 180,        // Блик должен быть ярким
-            
-            // === ДЕТЕКЦИЯ ЯМ ===
-            DROP_EDGE_CONTRAST: 0.70,         // Резкий край + темнота внутри = яма
-            DROP_TEXTURE_LOSS: 0.50,          // Исчезновение текстуры = провал
-            DROP_PARALLAX_MIN: 0.20,          // Разное движение = высота/глубина
-            
-            // === АДАПТАЦИЯ К ОСВЕЩЕНИЮ ===
-            LUX_DARK_THRESHOLD: 80,           // <80 = темно, повышаем пороги
-            LUX_BRIGHT_THRESHOLD: 200,        // >200 = ярко, можно снизить
-            ADAPTATION_RATE: 0.10,            // Плавность адаптации
-            HISTORY_FRAMES: 10,                // Скользящее окно
-            
-            // === ПРОИЗВОДИТЕЛЬНОСТЬ ===
-            WORK_WIDTH: 128,                  // Меньше = быстрее + меньше батарея
+            GLOBAL_MOTION_THRESHOLD: 0.55,
+            CONFIRM_FRAMES_OBSTACLE: 2,
+            CONFIRM_FRAMES_DROP: 1,
+            CONFIRM_FRAMES_WATER: 2,
+            ALERT_COOLDOWN: 2500,
+            WATER_SPECULAR_THRESHOLD: 0.85,
+            WATER_COLOR_BLUE_THRESHOLD: 1.15,
+            WATER_TEXTURE_SMOOTH: 0.20,
+            WATER_MIN_BRIGHTNESS: 180,
+            DROP_EDGE_CONTRAST: 0.70,
+            DROP_TEXTURE_LOSS: 0.50,
+            DROP_PARALLAX_MIN: 0.20,
+            LUX_DARK_THRESHOLD: 80,
+            LUX_BRIGHT_THRESHOLD: 200,
+            ADAPTATION_RATE: 0.10,
+            HISTORY_FRAMES: 10,
+            WORK_WIDTH: 128,
             WORK_HEIGHT: 96,
-            TARGET_FPS: DEVICE.isLowEnd ? 5 : 7,  // 5 FPS на слабых, 7 на нормальных
-            FRAME_SKIP_LOW_BATTERY: 15,       // При <15% батареи — ещё реже кадры
-            
-            // === СЕРДЦЕБИЕНИЕ ===
-            HEARTBEAT_INTERVAL: 5000,         // Каждые 5 секунд
-            HEARTBEAT_VIBRATION: [20],        // Микро-вибрация
-            
-            // === БАТАРЕЯ ===
+            TARGET_FPS: DEVICE.isLowEnd ? 5 : 7,
+            FRAME_SKIP_LOW_BATTERY: 15,
+            HEARTBEAT_INTERVAL: 5000,
+            HEARTBEAT_VIBRATION: [20],
             BATTERY_WARN_LEVELS: [20, 10, 5],
-            BATTERY_WARN_COOLDOWN: 300000,    // Не чаще 5 мин
-            
-            // === ОТЛАДКА ===
+            BATTERY_WARN_COOLDOWN: 300000,
             DEBUG: false
         };
 
@@ -232,46 +272,30 @@
         let state = {
             isRunning: false,
             isCalibrated: false,
-            
-            // Адаптация к освещению
             ambientLux: null,
             sceneBrightness: 128,
             adaptiveSensitivity: { obstacle: 0.45, drop: 0.35, water: 0.40 },
             brightnessHistory: [],
-            
-            // Зоны анализа
             zones: {
                 head: { alerts: 0, lastAlert: 0 },
                 chest: { alerts: 0, lastAlert: 0 },
                 ground: { alerts: 0, lastAlert: 0 }
             },
-            
-            // История для скользящего среднего (по зонам)
             zoneHistory: { head: [], chest: [], ground: [] },
-            
-            // Предыдущие данные для параллакса
             prevFrame: null,
             prevZoneAvg: { head: 128, chest: 128, ground: 128 },
-            
-            // Таймеры
             analysisTimer: null,
             heartbeatTimer: null,
             batteryTimer: null,
-            
-            // Аудио/видео
             audioCtx: null,
             mediaStream: null,
             videoTrack: null,
-            
-            // Датчики
             motionHandler: null,
             orientationHandler: null,
             lastAccelZ: null,
             accelCooldown: 0,
             batteryObj: null,
             lastBatteryWarn: 0,
-            
-            // Счётчики
             lastAlertTime: 0,
             lastHeartbeat: 0,
             frameCount: 0,
@@ -288,25 +312,21 @@
         const statusDiv = document.getElementById('status');
 
         // ============================================================
-        // 7. СЕРДЦЕБИЕНИЕ (подтверждение жизни системы)
+        // 7. СЕРДЦЕБИЕНИЕ
         // ============================================================
         function startHeartbeat() {
             if (state.heartbeatTimer) clearInterval(state.heartbeatTimer);
             state.heartbeatTimer = setInterval(() => {
                 if (!state.isRunning) return;
-                if (Date.now() - state.lastAlertTime < 8000) return; // Не мешать после тревоги
-                
+                if (Date.now() - state.lastAlertTime < 8000) return;
                 vibratePhone(CONFIG.HEARTBEAT_VIBRATION);
-                // Очень тихий звук (можно отключить в настройках)
-                // beepSound(300, 0.02, 0.05);
-                
                 state.lastHeartbeat = Date.now();
                 if (CONFIG.DEBUG) log('❤️ Heartbeat');
             }, CONFIG.HEARTBEAT_INTERVAL);
         }
 
         // ============================================================
-        // 8. АДАПТАЦИЯ К ОСВЕЩЕНИЮ (скользящее среднее)
+        // 8. АДАПТАЦИЯ К ОСВЕЩЕНИЮ
         // ============================================================
         function updateAdaptation(brightness) {
             state.sceneBrightness = brightness;
@@ -314,82 +334,59 @@
             if (state.brightnessHistory.length > CONFIG.HISTORY_FRAMES) {
                 state.brightnessHistory.shift();
             }
-            
-            // Адаптация порогов под освещение
             const avgHist = state.brightnessHistory.reduce((a,b)=>a+b,0) / state.brightnessHistory.length;
             let adjust = 0;
-            
             if (avgHist < CONFIG.LUX_DARK_THRESHOLD) {
-                // Темно: повышаем пороги (меньше шума)
                 adjust = +0.15;
             } else if (avgHist > CONFIG.LUX_BRIGHT_THRESHOLD) {
-                // Ярко: можно чуть снизить (лучше видны детали)
                 adjust = -0.05;
             }
-            
-            // Плавное применение
             state.adaptiveSensitivity.obstacle += (CONFIG.SENSITIVITY_OBSTACLE + adjust - state.adaptiveSensitivity.obstacle) * CONFIG.ADAPTATION_RATE;
             state.adaptiveSensitivity.drop += (CONFIG.SENSITIVITY_DROP + adjust - state.adaptiveSensitivity.drop) * CONFIG.ADAPTATION_RATE;
             state.adaptiveSensitivity.water += (CONFIG.SENSITIVITY_WATER + adjust - state.adaptiveSensitivity.water) * CONFIG.ADAPTATION_RATE;
-            
-            // Ограничения
             for (let key in state.adaptiveSensitivity) {
                 state.adaptiveSensitivity[key] = Math.min(CONFIG.SENSITIVITY_MAX, Math.max(CONFIG.SENSITIVITY_MIN, state.adaptiveSensitivity[key]));
             }
         }
 
         // ============================================================
-        // 9. АНАЛИЗ ЗОНЫ: вода / яма / препятствие
+        // 9. АНАЛИЗ ЗОНЫ
         // ============================================================
-        
-        // 9.1. Детекция лужи (блики + цвет + текстура)
         function detectWater(imgData, x, y, w, h) {
             const data = imgData.data;
             const W = imgData.width;
             let brightSum = 0, blueSum = 0, redSum = 0, textureSum = 0, cnt = 0;
             let specularCount = 0;
-            
             for (let py = y; py < y + h; py += 2) {
                 for (let px = x; px < x + w; px += 2) {
                     const idx = (py * W + px) * 4;
                     const r = data[idx], g = data[idx+1], b = data[idx+2];
                     const bright = 0.299*r + 0.587*g + 0.114*b;
-                    
                     brightSum += bright;
                     blueSum += b;
                     redSum += r;
                     textureSum += Math.abs(bright - 128);
                     cnt++;
-                    
-                    // Спекулярный блик: очень ярко + низкая насыщенность
                     if (bright > CONFIG.WATER_MIN_BRIGHTNESS && Math.abs(r-g) < 30 && Math.abs(g-b) < 30) {
                         specularCount++;
                     }
                 }
             }
             if (!cnt) return false;
-            
             const avgBright = brightSum / cnt;
             const blueRedRatio = (redSum > 10) ? blueSum / redSum : 0;
-            const texture = textureSum / cnt / 128; // 0..1
+            const texture = textureSum / cnt / 128;
             const specularRatio = specularCount / cnt;
-            
-            // Лужа = яркий блик + синий оттенок + гладкая текстура
             const isSpecular = specularRatio > 0.15 && avgBright > CONFIG.WATER_MIN_BRIGHTNESS;
             const isBlueish = blueRedRatio > CONFIG.WATER_COLOR_BLUE_THRESHOLD;
             const isSmooth = texture < CONFIG.WATER_TEXTURE_SMOOTH;
-            
             return (isSpecular && isBlueish) || (isSpecular && isSmooth);
         }
         
-        // 9.2. Детекция ямы (резкий край + потеря текстуры)
         function detectDrop(imgData, prevImg, x, y, w, h) {
             if (!prevImg) return false;
-            
             const data = imgData.data, prevData = prevImg.data;
             const W = imgData.width;
-            
-            // 1. Резкий контраст по краю (верх ячейки)
             let edgeContrast = 0;
             for (let px = x; px < x + w; px += 3) {
                 const idx1 = (y * W + px) * 4;
@@ -401,9 +398,7 @@
                 }
             }
             edgeContrast /= (w / 3);
-            edgeContrast /= 255; // Нормализация
-            
-            // 2. Потеря текстуры внутри (по сравнению с предыдущим кадром)
+            edgeContrast /= 255;
             let currVar = 0, prevVar = 0, cnt = 0;
             for (let py = y; py < y + h; py += 3) {
                 for (let px = x; px < x + w; px += 3) {
@@ -418,19 +413,14 @@
             if (!cnt) return false;
             currVar /= cnt; prevVar /= cnt;
             const textureLoss = prevVar > 0 ? Math.max(0, (prevVar - currVar) / prevVar) : 0;
-            
-            // Яма = резкий край + потеря текстуры
             return edgeContrast > CONFIG.DROP_EDGE_CONTRAST && textureLoss > CONFIG.DROP_TEXTURE_LOSS;
         }
         
-        // 9.3. Детекция препятствия (изменение яркости + параллакс)
         function detectObstacle(imgData, prevImg, x, y, w, h, zoneAvg) {
             if (!prevImg) return false;
-            
             const data = imgData.data, prevData = prevImg.data;
             const W = imgData.width;
             let currBright = 0, prevBright = 0, cnt = 0;
-            
             for (let py = y; py < y + h; py += 2) {
                 for (let px = x; px < x + w; px += 2) {
                     const idx = (py * W + px) * 4;
@@ -440,76 +430,52 @@
                 }
             }
             if (!cnt) return false;
-            
             currBright /= cnt;
             prevBright /= cnt;
             const deviation = prevBright > 0 ? Math.abs(currBright - prevBright) / prevBright : 0;
-            
             return deviation > state.adaptiveSensitivity.obstacle;
         }
 
-        // ============================================================
-        // 10. ФИЛЬТР ГЛОБАЛЬНОГО ДВИЖЕНИЯ
-        // ============================================================
         function isGlobalMotion(changedCells, totalCells) {
             return changedCells / totalCells > CONFIG.GLOBAL_MOTION_THRESHOLD;
         }
 
-        // ============================================================
-        // 11. ОСНОВНОЙ АНАЛИЗ КАДРА
-        // ============================================================
         function analyzeFrame() {
             if (!state.isRunning || !videoEl.videoWidth) return;
-            
-            // Захват кадра
             canvas.width = CONFIG.WORK_WIDTH;
             canvas.height = CONFIG.WORK_HEIGHT;
             ctx.drawImage(videoEl, 0, 0, CONFIG.WORK_WIDTH, CONFIG.WORK_HEIGHT);
             const imgData = ctx.getImageData(0, 0, CONFIG.WORK_WIDTH, CONFIG.WORK_HEIGHT);
-            
-            // Оценка яркости сцены (для адаптации)
             let totalBright = 0;
             for (let i = 0; i < imgData.data.length; i += 4) {
                 totalBright += imgData.data[i] + imgData.data[i+1] + imgData.data[i+2];
             }
             const sceneBright = totalBright / imgData.data.length / 3;
             updateAdaptation(sceneBright);
-            
-            // Зоны
             const zones = [
                 { name: 'head', y0: Math.floor(CONFIG.WORK_HEIGHT * CONFIG.ZONE_HEAD_START), y1: Math.floor(CONFIG.WORK_HEIGHT * CONFIG.ZONE_HEAD_END), sensitivity: state.adaptiveSensitivity.obstacle },
                 { name: 'chest', y0: Math.floor(CONFIG.WORK_HEIGHT * CONFIG.ZONE_CHEST_START), y1: Math.floor(CONFIG.WORK_HEIGHT * CONFIG.ZONE_CHEST_END), sensitivity: state.adaptiveSensitivity.obstacle },
                 { name: 'ground', y0: Math.floor(CONFIG.WORK_HEIGHT * CONFIG.ZONE_GROUND_START), y1: Math.floor(CONFIG.WORK_HEIGHT * CONFIG.ZONE_GROUND_END), sensitivity: state.adaptiveSensitivity.drop }
             ];
-            
             let totalChanged = 0;
             const totalCells = CONFIG.GRID_COLS * zones.length * CONFIG.GRID_ROWS_PER_ZONE;
-            
-            // Анализ каждой зоны
             for (const zone of zones) {
                 const zoneH = (zone.y1 - zone.y0) / CONFIG.GRID_ROWS_PER_ZONE;
                 const zoneW = CONFIG.WORK_WIDTH / CONFIG.GRID_COLS;
-                
                 for (let row = 0; row < CONFIG.GRID_ROWS_PER_ZONE; row++) {
                     for (let col = 0; col < CONFIG.GRID_COLS; col++) {
                         const x = col * zoneW;
                         const y = zone.y0 + row * zoneH;
-                        
-                        // 1. Проверка на лужу (только зона ног)
                         if (zone.name === 'ground' && detectWater(imgData, x, y, zoneW, zoneH)) {
                             triggerWaterAlert(zone);
                             totalChanged++;
                             continue;
                         }
-                        
-                        // 2. Проверка на яму (только зона ног)
                         if (zone.name === 'ground' && state.prevFrame && detectDrop(imgData, state.prevFrame, x, y, zoneW, zoneH)) {
                             triggerDropAlert(zone);
                             totalChanged++;
                             continue;
                         }
-                        
-                        // 3. Проверка на препятствие (все зоны)
                         if (state.prevFrame && detectObstacle(imgData, state.prevFrame, x, y, zoneW, zoneH, zone.y0)) {
                             triggerObstacleAlert(zone);
                             totalChanged++;
@@ -517,21 +483,14 @@
                     }
                 }
             }
-            
-            // Фильтр глобального движения
             if (isGlobalMotion(totalChanged, totalCells)) {
                 state.prevFrame = imgData;
                 return;
             }
-            
-            // Сохраняем для следующего кадра
             state.prevFrame = imgData;
             state.frameCount++;
         }
         
-        // ============================================================
-        // 12. ТРИГГЕРЫ ТРЕВОГ (с защитой от повторов)
-        // ============================================================
         function canAlert(zoneName, confirmFrames) {
             const zone = state.zones[zoneName];
             if (Date.now() - zone.lastAlert < CONFIG.ALERT_COOLDOWN) return false;
@@ -560,24 +519,19 @@
         }
         
         function triggerObstacleAlert(zone) {
-            const confirm = zone.name === 'head' ? 1 : CONFIG.CONFIRM_FRAMES_OBSTACLE; // Ветку — сразу
+            const confirm = zone.name === 'head' ? 1 : CONFIG.CONFIRM_FRAMES_OBSTACLE;
             if (canAlert(zone.name, confirm)) {
                 alertObstacle();
                 state.alertStats.obstacle++;
             }
         }
 
-        // ============================================================
-        // 13. ДЕТЕКТОР ПРОВАЛА (АКСЕЛЕРОМЕТР) — экстренный
-        // ============================================================
         function initMotion() {
             if (!DEVICE.hasMotion) return;
-            
             state.motionHandler = (e) => {
                 if (!state.isRunning) return;
                 const acc = e.accelerationIncludingGravity;
                 if (!acc || acc.z === null) return;
-                
                 if (state.lastAccelZ !== null && Date.now() > state.accelCooldown) {
                     const delta = acc.z - state.lastAccelZ;
                     if (delta < -5.5) {
@@ -589,31 +543,24 @@
                 }
                 state.lastAccelZ = acc.z;
             };
-            
             window.addEventListener('devicemotion', state.motionHandler, { passive: true });
             log('Motion sensor active');
         }
 
-        // ============================================================
-        // 14. МОНИТОРИНГ БАТАРЕИ
-        // ============================================================
         async function initBattery() {
             if (!DEVICE.hasBattery) return;
             try {
                 state.batteryObj = await navigator.getBattery();
-                
                 const check = () => {
                     if (!state.isRunning || !state.batteryObj) return;
                     const level = Math.round(state.batteryObj.level * 100);
                     const now = Date.now();
-                    
                     if (!state.batteryObj.charging) {
                         for (const lvl of CONFIG.BATTERY_WARN_LEVELS) {
                             if (level <= lvl && now - state.lastBatteryWarn > CONFIG.BATTERY_WARN_COOLDOWN) {
                                 speakText('Заряд ' + level + ' процентов', true);
                                 vibratePhone([100, 50, 100]);
                                 state.lastBatteryWarn = now;
-                                // При низком заряде — ещё больше экономим
                                 if (level <= CONFIG.FRAME_SKIP_LOW_BATTERY) {
                                     log('Low battery: reducing FPS');
                                 }
@@ -622,7 +569,6 @@
                         }
                     }
                 };
-                
                 state.batteryObj.addEventListener('levelchange', check);
                 state.batteryObj.addEventListener('chargingchange', check);
                 check();
@@ -639,9 +585,6 @@
             }
         }
 
-        // ============================================================
-        // 15. ЦИКЛ АНАЛИЗА (с ограничением FPS)
-        // ============================================================
         function processingLoop() {
             if (!state.isRunning) return;
             analyzeFrame();
@@ -651,24 +594,16 @@
             state.analysisTimer = setTimeout(() => requestAnimationFrame(processingLoop), 1000 / fps);
         }
 
-        // ============================================================
-        // 16. ЗАПУСК СИСТЕМЫ
-        // ============================================================
         async function startSystem() {
             if (state.isRunning) return;
-            
-            // Аудио по жесту
             if (!state.audioCtx) {
                 try { state.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
                 catch(e) { log('AudioContext error: ' + e); }
             }
-            
             startBtn.disabled = true;
             updateStatus('🟡 Инициализация...');
             log('Starting system...');
-            
             try {
-                // Камера с авто-экспозицией
                 const constraints = {
                     video: {
                         facingMode: 'environment',
@@ -677,31 +612,22 @@
                         advanced: [{ exposureMode: 'continuous' }]
                     }
                 };
-                
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 videoEl.srcObject = stream;
                 await videoEl.play();
-                
                 state.mediaStream = stream;
                 state.videoTrack = stream.getVideoTracks()[0];
                 state.isRunning = true;
-                
-                // Сброс состояния
                 state.frameCount = 0;
                 state.lastAlertTime = 0;
                 state.brightnessHistory = [];
                 state.prevFrame = null;
                 for (let z in state.zones) { state.zones[z].alerts = 0; state.zones[z].lastAlert = 0; }
-                
-                // Запуск сервисов
                 initMotion();
                 await initBattery();
                 startHeartbeat();
-                
-                // Калибровка
                 updateStatus('🟡 Калибровка 2 сек...');
                 speakText('Калибрую');
-                
                 setTimeout(() => {
                     if (state.isRunning) {
                         state.isCalibrated = true;
@@ -711,28 +637,21 @@
                         log('System ready');
                     }
                 }, 2000);
-                
                 processingLoop();
-                
             } catch(err) {
                 log('Start error: ' + err.name + ': ' + err.message);
                 let msg = 'Ошибка камеры';
                 if (err.name === 'NotAllowedError') msg = 'Разрешите камеру';
                 else if (err.name === 'NotFoundError') msg = 'Камера не найдена';
                 else if (err.name === 'NotReadableError') msg = 'Камера занята';
-                
                 updateStatus('❌ ' + msg, 'error');
                 speakText(msg);
                 startBtn.disabled = false;
             }
         }
 
-        // ============================================================
-        // 17. ОСТАНОВКА (полная очистка)
-        // ============================================================
         function stopSystem() {
             state.isRunning = false;
-            
             if (state.analysisTimer) clearTimeout(state.analysisTimer);
             if (state.heartbeatTimer) clearInterval(state.heartbeatTimer);
             if (state.mediaStream) state.mediaStream.getTracks().forEach(t => t.stop());
@@ -740,7 +659,6 @@
             if (state.orientationHandler) window.removeEventListener('deviceorientation', state.orientationHandler);
             stopBattery();
             if (state.audioCtx) state.audioCtx.close().catch(()=>{});
-            
             startBtn.disabled = false;
             updateStatus('⏹️ Остановлено');
             speakText('Защита выключена');
@@ -749,13 +667,54 @@
         }
 
         // ============================================================
-        // 18. СОБЫТИЯ
+        // УПРАВЛЕНИЕ КНОПКОЙ: УДЕРЖАНИЕ 5 СЕКУНД
         // ============================================================
-        startBtn.addEventListener('click', () => state.isRunning ? stopSystem() : startSystem());
-        window.addEventListener('beforeunload', () => { if (state.isRunning) stopSystem(); });
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && state.isRunning) stopSystem(); });
+        let holdTimer = null;
+        let isHolding = false;
+        const HOLD_DURATION = 5000; // 5 секунд
+        const btnSpan = startBtn.querySelector('span');
+
+        function onHoldStart(e) {
+            if (e.cancelable) e.preventDefault();
+            isHolding = true;
+            // Визуальная/тактильная обратная связь
+            startBtn.style.opacity = '0.6';
+            vibratePhone(30);
+            btnSpan.textContent = state.isRunning ? 'УДЕРЖИВАЙТЕ ДЛЯ ВЫКЛ...' : 'УДЕРЖИВАЙТЕ ДЛЯ ВКЛ...';
+            
+            holdTimer = setTimeout(() => {
+                if (isHolding) {
+                    isHolding = false;
+                    startBtn.style.opacity = '1';
+                    vibratePhone([50, 30, 50]);
+                    
+                    if (!state.isRunning) {
+                        startSystem();
+                    } else {
+                        stopSystem();
+                        // Закрытие приложения/вкладки
+                        window.close();
+                        setTimeout(() => {
+                            location.replace('about:blank');
+                        }, 300);
+                    }
+                }
+            }, HOLD_DURATION);
+        }
+
+        function onHoldCancel() {
+            clearTimeout(holdTimer);
+            isHolding = false;
+            startBtn.style.opacity = '1';
+            btnSpan.textContent = state.isRunning ? 'ВЫКЛЮЧИТЬ ЗАЩИТУ' : 'ВКЛЮЧИТЬ ЗАЩИТУ';
+        }
+
+        // Универсальные события для мыши и тачскрина
+        startBtn.addEventListener('pointerdown', onHoldStart);
+        startBtn.addEventListener('pointerup', onHoldCancel);
+        startBtn.addEventListener('pointercancel', onHoldCancel);
+        startBtn.addEventListener('pointerleave', onHoldCancel);
         
-        // Инициализация
         updateStatus('⚫ Нажмите для включения');
         log('Anti-AI Glance loaded. Safety first.');
     </script>
